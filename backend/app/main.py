@@ -1,33 +1,33 @@
 # Concept by MrHan (08974747477)
 """FastAPI application entrypoint.
 
-Phase 1 skeleton: exposes /health and a placeholder API router. No database
-connection is opened at import time or during startup in this phase.
+Phase 2A: auth, users, and master data are wired. The database engine is created
+lazily (first request), never at import time. Attachments/issue business logic
+arrive in Phase 2B.
 """
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
+from app.core.errors import register_exception_handlers
+from app.db.session import dispose_engine
+from app.middleware.request_id import RequestIDMiddleware
 
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Minimal lifecycle hook.
-
-    Phase 1: no DB engine, pool, or migration is started here. Phase 2 will
-    initialize the async engine and perform readiness checks.
-    """
-    # startup (intentionally empty in Phase 1)
+    # Startup: nothing eager — the engine is created on first DB use.
     yield
-    # shutdown (intentionally empty in Phase 1)
+    # Shutdown: dispose the async engine if it was created.
+    await dispose_engine()
 
 
 app = FastAPI(
@@ -37,6 +37,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Order matters: request-id first so handlers/logs can see it.
+app.add_middleware(RequestIDMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins_list,
@@ -44,6 +46,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+register_exception_handlers(app)
 
 
 @app.get("/health", tags=["meta"])

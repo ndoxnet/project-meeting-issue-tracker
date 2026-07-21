@@ -375,3 +375,18 @@ CLOSED      -> REOPENED
 REOPENED    -> IN_PROGRESS | PENDING
 ```
 Every transition writes an `issue_updates` row and an `audit_logs` row.
+
+---
+
+## Migration status (Phase 2A)
+- Initial migration: `alembic/versions/0d3d40690d49_initial_schema_phase_2a.py`
+  (revision `0d3d40690d49`, down_revision `None`).
+- Enum storage decision: **string-backed** (VARCHAR + CHECK constraint), not
+  native PostgreSQL ENUM — portable to SQLite for tests, easy to evolve.
+- Portable types: `before_data`/`after_data`/`app_settings.value` are JSON with a
+  `JSONB` variant on PostgreSQL; `audit_logs.ip_address` is `VARCHAR(45)` with an
+  `INET` variant on PostgreSQL. Tests (SQLite) build the schema via
+  `Base.metadata.create_all`; the migration is PostgreSQL-targeted.
+- Validated: `alembic upgrade head` + `alembic downgrade base` on SQLite, and
+  `alembic check` (models ↔ migration parity). **NOT** executed on PostgreSQL /
+  the production VPS in Phase 2A.

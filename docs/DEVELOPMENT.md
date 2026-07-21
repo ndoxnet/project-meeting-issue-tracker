@@ -11,10 +11,30 @@
 ```bash
 cd backend
 python3.12 -m venv .venv && source .venv/bin/activate
-pip install -e .            # installs from pyproject.toml (dev machine only)
+pip install -e ".[dev]"     # installs from pyproject.toml (dev machine only)
 uvicorn app.main:app --reload --port 8000   # local dev only
 ```
-- Lint: `ruff check app` — Types: `mypy app` — Tests: `pytest`.
+- Lint: `ruff check .` — Types: `mypy app` — Tests: `pytest -q`.
+
+> Note: on hosts where `python3-venv`/`ensurepip` is unavailable (as on the
+> current VPS), create the environment with `virtualenv -p python3.12 .venv`
+> (which bundles pip) instead of `python -m venv`.
+
+## Environment for tests
+Tests set required env vars in `tests/conftest.py` **before** importing the app
+(strict settings validation) and use an in-memory async SQLite database. Run the
+suite single-process (no `pytest-xdist`). Argon2 makes the suite ~1 min — expected.
+
+## Migrations (Alembic, async)
+```bash
+# DATABASE_URL + SECRET_KEY must be set in the environment.
+alembic revision --autogenerate -m "describe change"
+alembic upgrade head
+alembic check          # verify models match the latest migration
+```
+The initial migration is `alembic/versions/0d3d40690d49_initial_schema_phase_2a.py`.
+It was validated on SQLite (upgrade/downgrade + `alembic check`); it has NOT been
+run against PostgreSQL on the VPS.
 
 ## Frontend (local, OFF-VPS)
 ```bash

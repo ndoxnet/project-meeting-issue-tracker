@@ -29,10 +29,25 @@ pip install -e ".[dev]"
 uvicorn app.main:app --reload --port 8000
 ```
 
-## Endpoints (Phase 1)
-- `GET /health` → `{"status":"ok","service":"...","version":"0.1.0"}`
-- `GET /api/ping` → `{"message":"pong"}`
+## Endpoints (Phase 2A)
+- `GET /health`, `GET /api/ping` — meta (no DB).
+- `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`
+- `GET|POST /api/v1/users`, `GET|PATCH /api/v1/users/{id}`,
+  `POST /api/v1/users/{id}/activate|deactivate|reset-password` (ADMIN)
+- `/api/v1/categories`, `/api/v1/responsible-parties`, `/api/v1/meetings`
+  (read: any role; write: ADMIN) with `/{id}/activate|deactivate`
+- `/api/v1/meeting-occurrences` (read: any; create/update: EDITOR+)
+- `/api/v1/settings`, `/api/v1/settings/{key}` (read: any; PATCH: ADMIN)
+
+## Scripts
+- `python -m scripts.bootstrap_admin` — idempotent admin from env.
+- `python -m scripts.seed_master_data` — idempotent categories/parties/meetings.
+
+## Quality gates (Phase 2A)
+- `pytest -q` → 68 passing · `ruff check .` clean · `mypy app` clean.
+- Migration `0d3d40690d49` validated on SQLite (upgrade/downgrade + `alembic
+  check`); not run on PostgreSQL.
 
 ## Notes
-- No database connection is opened at import or startup in Phase 1.
+- No database connection is opened at import time; the engine is created lazily.
 - No dependency lockfile is committed (installs happen off-VPS — ADR-004).

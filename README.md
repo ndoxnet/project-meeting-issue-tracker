@@ -1,7 +1,10 @@
 # Project Meeting Issue Tracker
 
 > Concept by MrHan (08974747477)
-> **Status: Phase 1 — architecture & skeleton.** Nothing is built or running yet.
+> **Status: Phase 2A — database, auth, RBAC, users & master data.**
+> Backend foundation implemented and tested (68 tests, ruff+mypy clean). No
+> production stack is running; the frontend is not integrated; issue business
+> logic is Phase 2B.
 
 Internal web app for the Project Control team to record, monitor, and control
 issues and follow-ups discussed across many project meetings.
@@ -69,12 +72,16 @@ push the image; the VPS only pulls it (see
 `make help` lists tasks. `compose-build` / `compose-up` are intentionally guarded
 against running on the VPS in Phase 1.
 
-## Known limitations (Phase 1)
-- No business logic, models, migrations, or auth yet (Phase 2).
-- No UI implementation beyond shell + placeholder pages (Phase 3).
+## Known limitations (Phase 2A)
+- Access tokens are not revocable server-side; logout = client discards token;
+  no refresh token yet (see ADR-009 / SECURITY.md).
+- Migration validated on SQLite (upgrade/downgrade + `alembic check`); NOT run on
+  PostgreSQL / the VPS.
+- Issue CRUD/lifecycle, attachments, dashboard, reports/CSV → Phase 2B.
+- Frontend not integrated (Phase 3). No UI beyond the Phase 1 shell.
 - No dependency lockfiles committed (installs happen off-VPS).
-- Resource limits in compose are starting estimates, validated at deploy time.
 
 ## Next phase
-Phase 2 — models, Alembic migrations, authentication, RBAC, master data, issue
-lifecycle, issue-update history, audit log, and backend tests.
+Phase 2B — issue-code generation, issue CRUD, lifecycle transitions, append-only
+updates, close/reopen, archive, attachment metadata, dashboard aggregates, CSV
+export, and tests.

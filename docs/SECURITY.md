@@ -59,3 +59,23 @@
 
 ## Log redaction
 - Never log passwords, tokens, `SECRET_KEY`, or full attachment contents.
+- `app/core/redaction.py` recursively redacts sensitive keys (password,
+  password_hash, token, access_token, authorization, secret) from audit
+  before/after payloads and any structured context.
+
+## Phase 2A implementation status
+- **Password hashing:** Argon2id via pwdlib (ADR-008). Policy: 12–128 chars, not
+  equal to username/email. Timing equalized for unknown users via a dummy verify.
+  Breached-password lookup is NOT implemented in the MVP.
+- **Tokens:** PyJWT HS256 (ADR-009). Explicit algorithm allow-list on decode;
+  required claims sub/iat/exp/jti; generic 401 on any failure.
+- **Token revocation — KNOWN LIMITATION:** access tokens are **not** revocable
+  server-side. Logout only audits the event and instructs the client to discard
+  the token; the token stays valid until `exp`. No refresh token yet.
+- **RBAC:** enforced server-side on every endpoint; authorization uses the
+  current **database** role, never the JWT claim alone. Inactive users cannot act
+  even with a valid token.
+- **Request correlation:** `X-Request-ID` middleware (bounded/validated input),
+  echoed on responses and stored in audit rows.
+- **Admin bootstrap:** `scripts/bootstrap_admin.py` reads env, is idempotent,
+  refuses `CHANGE_ME`, never prints the password.
