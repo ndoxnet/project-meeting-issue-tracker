@@ -1,0 +1,25 @@
+# Concept by MrHan (08974747477)
+# SAMPLE host Nginx vhost for the Project Meeting Issue Tracker.
+#
+# This is a REFERENCE ONLY. Phase 1 does NOT install or modify any host Nginx
+# config. During the deployment phase (after the app runs locally and is
+# approved), copy/adapt this into the host Nginx and reload — as a separate,
+# explicitly-approved step. It simply forwards to the frontend's loopback bind.
+
+server {
+    listen 80;
+    server_name issue-tracker.example.com;   # set the real hostname at deploy
+
+    # Behind Cloudflare Tunnel: trust CF for the real client IP (optional).
+    # real_ip_header CF-Connecting-IP;
+
+    client_max_body_size 12m;   # match ATTACHMENT_MAX_MB (+ headroom)
+
+    location / {
+        proxy_pass         http://127.0.0.1:5200;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}

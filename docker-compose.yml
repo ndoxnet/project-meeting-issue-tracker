@@ -1,0 +1,98 @@
+# Concept by MrHan (08974747477)
+# Project Meeting Issue Tracker — Compose definition.
+#
+# Phase 1: DEFINITION ONLY. Do NOT build or `up` this on the production VPS in
+# Phase 1. Resource limits below are conservative starting points and MUST be
+# validated during the deployment phase.
+#
+# Exposure model:
+#   - postgres : internal only (NO host port)
+#   - backend  : internal only (NO host port)
+#   - frontend : the ONLY host binding -> 127.0.0.1:${FRONTEND_BIND_PORT}
+
+name: issue-tracker
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - issue_tracker_postgres_data:/var/lib/postgresql/data
+    networks:
+      - issue_tracker_network
+    # No `ports:` — database is never exposed to the host or internet.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+
+  backend:
+    build:
+      context: ./backend
+    image: issue-tracker-backend:0.1.0
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      STORAGE_PATH: ${STORAGE_PATH}
+    volumes:
+      - issue_tracker_attachments:${STORAGE_PATH}
+    networks:
+      - issue_tracker_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # No `ports:` — backend is internal only, reached via the frontend proxy.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+
+  frontend:
+    build:
+      # NOTE: build this image OFF the production VPS (ADR-004), then pull it.
+      context: ./frontend
+    image: issue-tracker-frontend:0.1.0
+    restart: unless-stopped
+    ports:
+      # The only host binding — loopback only; host Nginx/Cloudflare front it.
+      - "${FRONTEND_BIND_HOST:-127.0.0.1}:${FRONTEND_BIND_PORT:-5200}:8080"
+    networks:
+      - issue_tracker_network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+networks:
+  issue_tracker_network:
+    driver: bridge
+
+volumes:
+  issue_tracker_postgres_data:
+  issue_tracker_attachments:

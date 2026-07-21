@@ -1,0 +1,62 @@
+# Concept by MrHan (08974747477)
+
+# ---- Secrets & environment ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+*.secret
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+venv/
+env/
+
+# ---- Node / frontend ----
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- Local upload storage (runtime attachments) ----
+storage/*
+!storage/.gitkeep
+
+# ---- Database dumps & backups ----
+*.sql
+*.dump
+*.sqlite
+*.sqlite3
+*.db
+deployment/backup/*.gz
+deployment/backup/*.tar
+
+# ---- Logs & temp ----
+*.log
+logs/
+tmp/
+*.tmp
+
+# ---- IDE / OS ----
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
