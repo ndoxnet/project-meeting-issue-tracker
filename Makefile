@@ -7,7 +7,8 @@ ENV_FILE ?= .env
 
 .PHONY: help lint-backend test-backend dev-backend dev-frontend \
         compose-config compose-build compose-up compose-down \
-        migration-new migration-up
+        migration-new migration-up \
+        openapi-export openapi-check contract-test frontend-types-generate
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -46,3 +47,20 @@ migration-new: ## Create a new Alembic revision (NAME=...)
 
 migration-up: ## Apply migrations to head
 	cd backend && alembic upgrade head
+
+openapi-export: ## Export OpenAPI to docs/api/openapi.{json,yaml} (no DB needed)
+	cd backend && .venv/bin/python scripts/export_openapi.py
+
+openapi-check: ## Fail if the committed OpenAPI is stale vs the app
+	cd backend && .venv/bin/python scripts/export_openapi.py
+	git diff --exit-code docs/api/openapi.json docs/api/openapi.yaml \
+	  || (echo ">>> OpenAPI is stale — commit the regenerated docs/api/openapi.*" && exit 1)
+
+contract-test: ## Run API contract tests
+	cd backend && .venv/bin/pytest tests/contract -q
+
+frontend-types-generate: ## Generate TS types from OpenAPI (OFF-VPS only)
+	@echo ">>> Do NOT run npm-based type generation on the production VPS."
+	@echo ">>> Off-VPS / CI, run:"
+	@echo "    npx openapi-typescript docs/api/openapi.json \\"
+	@echo "      --output frontend/src/api/generated/schema.ts"

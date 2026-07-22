@@ -50,7 +50,7 @@ async def _detail(session: AsyncSession, issue: Issue) -> IssueDetailResponse:
     )
 
 
-@router.get("", response_model=Page[IssueListItem])
+@router.get("", response_model=Page[IssueListItem], operation_id="issues_list")
 async def list_issues(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),
@@ -123,7 +123,7 @@ async def list_issues(
     return Page[IssueListItem](items=items, meta=_page_meta(page, page_size, total))
 
 
-@router.post("", response_model=IssueCreateResponse, status_code=201)
+@router.post("", response_model=IssueCreateResponse, status_code=201, operation_id="issues_create")
 async def create_issue(
     payload: IssueCreate,
     session: AsyncSession = Depends(get_db),
@@ -137,7 +137,7 @@ async def create_issue(
     return IssueCreateResponse(issue=await _detail(session, issue), warnings=warnings)
 
 
-@router.get("/{issue_id}", response_model=IssueDetailResponse)
+@router.get("/{issue_id}", response_model=IssueDetailResponse, operation_id="issues_get")
 async def get_issue(
     issue_id: uuid.UUID,
     session: AsyncSession = Depends(get_db),
@@ -147,7 +147,7 @@ async def get_issue(
     return await _detail(session, issue)
 
 
-@router.patch("/{issue_id}", response_model=IssueDetailResponse)
+@router.patch("/{issue_id}", response_model=IssueDetailResponse, operation_id="issues_update")
 async def update_issue(
     issue_id: uuid.UUID,
     payload: IssueMetadataUpdate,
@@ -161,7 +161,9 @@ async def update_issue(
     return await _detail(session, issue)
 
 
-@router.post("/{issue_id}/status", response_model=IssueDetailResponse)
+@router.post(
+    "/{issue_id}/status", response_model=IssueDetailResponse, operation_id="issues_change_status"
+)
 async def change_status(
     issue_id: uuid.UUID,
     payload: IssueStatusChangeRequest,
@@ -175,7 +177,7 @@ async def change_status(
     return await _detail(session, issue)
 
 
-@router.post("/{issue_id}/close", response_model=IssueDetailResponse)
+@router.post("/{issue_id}/close", response_model=IssueDetailResponse, operation_id="issues_close")
 async def close_issue(
     issue_id: uuid.UUID,
     payload: IssueCloseRequest,
@@ -189,7 +191,7 @@ async def close_issue(
     return await _detail(session, issue)
 
 
-@router.post("/{issue_id}/reopen", response_model=IssueDetailResponse)
+@router.post("/{issue_id}/reopen", response_model=IssueDetailResponse, operation_id="issues_reopen")
 async def reopen_issue(
     issue_id: uuid.UUID,
     payload: IssueReopenRequest,
@@ -203,7 +205,9 @@ async def reopen_issue(
     return await _detail(session, issue)
 
 
-@router.post("/{issue_id}/archive", response_model=IssueDetailResponse)
+@router.post(
+    "/{issue_id}/archive", response_model=IssueDetailResponse, operation_id="issues_archive"
+)
 async def archive_issue(
     issue_id: uuid.UUID,
     payload: IssueArchiveRequest,
@@ -217,7 +221,9 @@ async def archive_issue(
     return await _detail(session, issue)
 
 
-@router.post("/{issue_id}/restore", response_model=IssueDetailResponse)
+@router.post(
+    "/{issue_id}/restore", response_model=IssueDetailResponse, operation_id="issues_restore"
+)
 async def restore_issue(
     issue_id: uuid.UUID,
     payload: IssueRestoreRequest,

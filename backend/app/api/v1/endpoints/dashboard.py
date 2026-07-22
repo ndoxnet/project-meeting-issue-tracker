@@ -32,7 +32,7 @@ async def _items(session: AsyncSession, rows: list[Issue]) -> list[IssueListItem
     ]
 
 
-@router.get("/summary", response_model=DashboardSummary)
+@router.get("/summary", response_model=DashboardSummary, operation_id="dashboard_summary")
 async def summary(
     session: AsyncSession = Depends(get_db),
     _: User = Depends(require_any),
@@ -41,7 +41,7 @@ async def summary(
     return DashboardSummary(**data)
 
 
-@router.get("/overdue", response_model=list[IssueListItem])
+@router.get("/overdue", response_model=list[IssueListItem], operation_id="dashboard_overdue")
 async def overdue(
     limit: int = Query(50, ge=1, le=200),
     session: AsyncSession = Depends(get_db),
@@ -50,7 +50,7 @@ async def overdue(
     return await _items(session, await dash_repo.overdue_issues(session, limit=limit))
 
 
-@router.get("/stagnant", response_model=list[IssueListItem])
+@router.get("/stagnant", response_model=list[IssueListItem], operation_id="dashboard_stagnant")
 async def stagnant(
     limit: int = Query(50, ge=1, le=200),
     session: AsyncSession = Depends(get_db),
@@ -62,7 +62,9 @@ async def stagnant(
     return await _items(session, rows)
 
 
-@router.get("/due-this-week", response_model=list[IssueListItem])
+@router.get(
+    "/due-this-week", response_model=list[IssueListItem], operation_id="dashboard_due_this_week"
+)
 async def due_this_week(
     limit: int = Query(50, ge=1, le=200),
     session: AsyncSession = Depends(get_db),
@@ -71,7 +73,11 @@ async def due_this_week(
     return await _items(session, await dash_repo.due_this_week_issues(session, limit=limit))
 
 
-@router.get("/recently-updated", response_model=list[IssueListItem])
+@router.get(
+    "/recently-updated",
+    response_model=list[IssueListItem],
+    operation_id="dashboard_recently_updated",
+)
 async def recently_updated(
     limit: int = Query(10, ge=1, le=50),
     session: AsyncSession = Depends(get_db),
@@ -80,7 +86,7 @@ async def recently_updated(
     return await _items(session, await dash_repo.recently_updated_issues(session, limit=limit))
 
 
-@router.get("/by-category", response_model=list[CountByLabel])
+@router.get("/by-category", response_model=list[CountByLabel], operation_id="dashboard_by_category")
 async def by_category(
     session: AsyncSession = Depends(get_db),
     _: User = Depends(require_any),
@@ -88,7 +94,11 @@ async def by_category(
     return [CountByLabel(label=n, count=c) for n, c in await dash_repo.count_by_category(session)]
 
 
-@router.get("/by-responsible-party", response_model=list[CountByLabel])
+@router.get(
+    "/by-responsible-party",
+    response_model=list[CountByLabel],
+    operation_id="dashboard_by_responsible_party",
+)
 async def by_responsible_party(
     session: AsyncSession = Depends(get_db),
     _: User = Depends(require_any),
@@ -99,7 +109,11 @@ async def by_responsible_party(
     ]
 
 
-@router.get("/opened-vs-closed", response_model=list[MonthlyTrendPoint])
+@router.get(
+    "/opened-vs-closed",
+    response_model=list[MonthlyTrendPoint],
+    operation_id="dashboard_opened_vs_closed",
+)
 async def opened_vs_closed(
     months: int = Query(6, ge=1, le=24),
     session: AsyncSession = Depends(get_db),

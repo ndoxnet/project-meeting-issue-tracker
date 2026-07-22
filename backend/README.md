@@ -43,10 +43,15 @@ uvicorn app.main:app --reload --port 8000
 - `python -m scripts.bootstrap_admin` — idempotent admin from env.
 - `python -m scripts.seed_master_data` — idempotent categories/parties/meetings.
 
-## Quality gates (Phase 2A)
-- `pytest -q` → 68 passing · `ruff check .` clean · `mypy app` clean.
-- Migration `0d3d40690d49` validated on SQLite (upgrade/downgrade + `alembic
-  check`); not run on PostgreSQL.
+## OpenAPI / contract
+- Export the spec (no DB needed): `python scripts/export_openapi.py` (or
+  `make openapi-export`) → `docs/api/openapi.{json,yaml}`.
+- Contract tests: `pytest tests/contract -q` (or `make contract-test`).
+- Drift check: `make openapi-check` (fails if the committed spec is stale).
+
+## Quality gates
+- `pytest -q` → 134 SQLite + 24 contract passing · `ruff check .` clean ·
+  `mypy app` clean. PostgreSQL integration: `pytest -m postgresql` (isolated DB).
 
 ## Notes
 - No database connection is opened at import time; the engine is created lazily.

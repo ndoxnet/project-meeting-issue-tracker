@@ -28,7 +28,7 @@ def _page_meta(page: int, page_size: int, total: int) -> PageMeta:
     return PageMeta(page=page, page_size=page_size, total=total, pages=pages)
 
 
-@router.get("", response_model=Page[UserResponse])
+@router.get("", response_model=Page[UserResponse], operation_id="users_list")
 async def list_users(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),
@@ -50,7 +50,7 @@ async def list_users(
     )
 
 
-@router.post("", response_model=UserResponse, status_code=201)
+@router.post("", response_model=UserResponse, status_code=201, operation_id="users_create")
 async def create_user(
     payload: UserCreate,
     session: AsyncSession = Depends(get_db),
@@ -61,7 +61,7 @@ async def create_user(
     return UserResponse.model_validate(user)
 
 
-@router.get("/{user_id}", response_model=UserResponse)
+@router.get("/{user_id}", response_model=UserResponse, operation_id="users_get")
 async def get_user(
     user_id: uuid.UUID,
     session: AsyncSession = Depends(get_db),
@@ -75,7 +75,7 @@ async def get_user(
     return UserResponse.model_validate(user)
 
 
-@router.patch("/{user_id}", response_model=UserResponse)
+@router.patch("/{user_id}", response_model=UserResponse, operation_id="users_update")
 async def update_user(
     user_id: uuid.UUID,
     payload: UserUpdate,
@@ -89,7 +89,7 @@ async def update_user(
     return UserResponse.model_validate(user)
 
 
-@router.post("/{user_id}/activate", response_model=UserResponse)
+@router.post("/{user_id}/activate", response_model=UserResponse, operation_id="users_activate")
 async def activate_user(
     user_id: uuid.UUID,
     session: AsyncSession = Depends(get_db),
@@ -102,7 +102,7 @@ async def activate_user(
     return UserResponse.model_validate(user)
 
 
-@router.post("/{user_id}/deactivate", response_model=UserResponse)
+@router.post("/{user_id}/deactivate", response_model=UserResponse, operation_id="users_deactivate")
 async def deactivate_user(
     user_id: uuid.UUID,
     session: AsyncSession = Depends(get_db),
@@ -115,7 +115,9 @@ async def deactivate_user(
     return UserResponse.model_validate(user)
 
 
-@router.post("/{user_id}/reset-password", response_model=Message)
+@router.post(
+    "/{user_id}/reset-password", response_model=Message, operation_id="users_reset_password"
+)
 async def reset_password(
     user_id: uuid.UUID,
     payload: PasswordResetRequest,

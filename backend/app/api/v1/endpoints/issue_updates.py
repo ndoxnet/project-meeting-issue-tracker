@@ -24,7 +24,11 @@ from app.services import issue_update as update_service
 router = APIRouter()
 
 
-@router.get("/{issue_id}/updates", response_model=list[IssueUpdateResponse])
+@router.get(
+    "/{issue_id}/updates",
+    response_model=list[IssueUpdateResponse],
+    operation_id="issue_updates_list",
+)
 async def list_updates(
     issue_id: uuid.UUID,
     order: str = Query("asc", pattern="^(asc|desc)$"),
@@ -36,7 +40,12 @@ async def list_updates(
     return [IssueUpdateResponse.model_validate(r) for r in rows]
 
 
-@router.post("/{issue_id}/updates", response_model=IssueUpdateResponse, status_code=201)
+@router.post(
+    "/{issue_id}/updates",
+    response_model=IssueUpdateResponse,
+    status_code=201,
+    operation_id="issue_updates_create",
+)
 async def create_update(
     issue_id: uuid.UUID,
     payload: IssueUpdateCreate,
@@ -50,7 +59,11 @@ async def create_update(
     return IssueUpdateResponse.model_validate(upd)
 
 
-@router.get("/{issue_id}/updates/{update_id}", response_model=IssueUpdateResponse)
+@router.get(
+    "/{issue_id}/updates/{update_id}",
+    response_model=IssueUpdateResponse,
+    operation_id="issue_updates_get",
+)
 async def get_update(
     issue_id: uuid.UUID,
     update_id: uuid.UUID,
@@ -63,7 +76,11 @@ async def get_update(
     return IssueUpdateResponse.model_validate(upd)
 
 
-@router.post("/{issue_id}/updates/{update_id}/void", response_model=VoidResponse)
+@router.post(
+    "/{issue_id}/updates/{update_id}/void",
+    response_model=VoidResponse,
+    operation_id="issue_updates_void",
+)
 async def void_update(
     issue_id: uuid.UUID,
     update_id: uuid.UUID,

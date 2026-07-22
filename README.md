@@ -1,10 +1,19 @@
 # Project Meeting Issue Tracker
 
 > Concept by MrHan (08974747477)
-> **Status: Phase 2B.5 — validated against real PostgreSQL.** Backend
-> feature-complete for the MVP; 134 SQLite tests + 34 PostgreSQL integration tests
-> (concurrency, migration, JSONB/INET, constraints, atomicity) pass; ruff+mypy
-> clean. No production stack is running; the frontend is not integrated (Phase 2C).
+> **Status: Phase 2B.6 — v1 API contract frozen.** Backend feature-complete and
+> validated (134 SQLite + 34 PostgreSQL + 24 contract tests; ruff+mypy clean). The
+> OpenAPI contract and frontend handoff are published under `docs/api/`. No
+> production stack is running; the frontend is not integrated (Phase 2C).
+
+## API contract (frozen v1)
+- Spec: [`docs/api/openapi.json`](docs/api/openapi.json) (+ `.yaml`) — base path `/api/v1`.
+- Docs: [`docs/api/`](docs/api/) — endpoints, authorization, response conventions,
+  error codes, field semantics, filters, dashboard, attachments, and the
+  [frontend handoff](docs/api/FRONTEND_HANDOFF.md) + [compatibility policy](docs/api/COMPATIBILITY_POLICY.md).
+- Regenerate: `make openapi-export` · Check for drift: `make openapi-check` ·
+  Contract tests: `make contract-test`.
+- Generate TS types (OFF-VPS): `make frontend-types-generate`.
 
 Internal web app for the Project Control team to record, monitor, and control
 issues and follow-ups discussed across many project meetings.
@@ -85,4 +94,4 @@ against running on the VPS in Phase 1.
 ## Next phase
 Phase 2C — frontend implementation (login, shell, dashboard, issue register,
 issue form, detail timeline, meetings, master data, users, audit) against the
-Phase 2A/2B API.
+frozen v1 API, built **off-VPS** from the generated types.

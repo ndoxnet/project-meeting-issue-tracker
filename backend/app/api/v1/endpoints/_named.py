@@ -25,10 +25,10 @@ def _page_meta(page: int, page_size: int, total: int) -> PageMeta:
     return PageMeta(page=page, page_size=page_size, total=total, pages=pages)
 
 
-def make_named_router(model: type, entity_type: str) -> APIRouter:
+def make_named_router(model: type, entity_type: str, op_prefix: str) -> APIRouter:
     router = APIRouter()
 
-    @router.get("", response_model=Page[NamedResponse])
+    @router.get("", response_model=Page[NamedResponse], operation_id=f"{op_prefix}_list")
     async def list_items(
         page: int = Query(1, ge=1),
         page_size: int = Query(20, ge=1, le=200),
@@ -50,7 +50,9 @@ def make_named_router(model: type, entity_type: str) -> APIRouter:
             meta=_page_meta(page, page_size, total),
         )
 
-    @router.post("", response_model=NamedResponse, status_code=201)
+    @router.post(
+        "", response_model=NamedResponse, status_code=201, operation_id=f"{op_prefix}_create"
+    )
     async def create_item(
         payload: NamedCreate,
         session: AsyncSession = Depends(get_db),
@@ -62,7 +64,7 @@ def make_named_router(model: type, entity_type: str) -> APIRouter:
         )
         return NamedResponse.model_validate(obj)
 
-    @router.get("/{item_id}", response_model=NamedResponse)
+    @router.get("/{item_id}", response_model=NamedResponse, operation_id=f"{op_prefix}_get")
     async def get_item(
         item_id: uuid.UUID,
         session: AsyncSession = Depends(get_db),
@@ -73,7 +75,7 @@ def make_named_router(model: type, entity_type: str) -> APIRouter:
             raise NotFoundError(f"{entity_type} not found")
         return NamedResponse.model_validate(obj)
 
-    @router.patch("/{item_id}", response_model=NamedResponse)
+    @router.patch("/{item_id}", response_model=NamedResponse, operation_id=f"{op_prefix}_update")
     async def update_item(
         item_id: uuid.UUID,
         payload: NamedUpdate,
@@ -92,7 +94,9 @@ def make_named_router(model: type, entity_type: str) -> APIRouter:
         )
         return NamedResponse.model_validate(obj)
 
-    @router.post("/{item_id}/activate", response_model=NamedResponse)
+    @router.post(
+        "/{item_id}/activate", response_model=NamedResponse, operation_id=f"{op_prefix}_activate"
+    )
     async def activate_item(
         item_id: uuid.UUID,
         session: AsyncSession = Depends(get_db),
@@ -110,7 +114,11 @@ def make_named_router(model: type, entity_type: str) -> APIRouter:
         )
         return NamedResponse.model_validate(obj)
 
-    @router.post("/{item_id}/deactivate", response_model=NamedResponse)
+    @router.post(
+        "/{item_id}/deactivate",
+        response_model=NamedResponse,
+        operation_id=f"{op_prefix}_deactivate",
+    )
     async def deactivate_item(
         item_id: uuid.UUID,
         session: AsyncSession = Depends(get_db),

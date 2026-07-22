@@ -25,6 +25,23 @@ class IssueCreate(BaseModel):
     # Optional acknowledgement to proceed despite a possible-duplicate warning.
     confirm_possible_duplicate: bool = False
 
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "title": "Vendor commissioning attendance is pending",
+                    "description": "Vendor engineer not yet mobilized for Area 5 commissioning.",
+                    "category_id": "3f1c9d2e-0000-4000-8000-000000000001",
+                    "priority": "HIGH",
+                    "raised_date": "2026-07-10",
+                    "due_date": "2026-08-01",
+                    "pic_name": "Budi Santoso",
+                    "next_action": "Vendor to confirm mobilization date",
+                }
+            ]
+        }
+    }
+
 
 class IssueMetadataUpdate(BaseModel):
     """Generic metadata edit. Status/close/reopen/archive use dedicated endpoints."""

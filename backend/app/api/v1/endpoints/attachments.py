@@ -18,7 +18,11 @@ from app.services import attachment as attachment_service
 router = APIRouter()
 
 
-@router.get("/{issue_id}/attachments", response_model=list[AttachmentResponse])
+@router.get(
+    "/{issue_id}/attachments",
+    response_model=list[AttachmentResponse],
+    operation_id="attachments_list",
+)
 async def list_attachments(
     issue_id: uuid.UUID,
     session: AsyncSession = Depends(get_db),
@@ -28,7 +32,12 @@ async def list_attachments(
     return [AttachmentResponse.model_validate(r) for r in rows]
 
 
-@router.post("/{issue_id}/attachments", response_model=AttachmentResponse, status_code=201)
+@router.post(
+    "/{issue_id}/attachments",
+    response_model=AttachmentResponse,
+    status_code=201,
+    operation_id="attachments_upload",
+)
 async def upload_attachment(
     issue_id: uuid.UUID,
     file: UploadFile = File(...),
@@ -53,7 +62,7 @@ async def upload_attachment(
     return AttachmentResponse.model_validate(att)
 
 
-@router.get("/{issue_id}/attachments/{attachment_id}/download")
+@router.get("/{issue_id}/attachments/{attachment_id}/download", operation_id="attachments_download")
 async def download_attachment(
     issue_id: uuid.UUID,
     attachment_id: uuid.UUID,
@@ -72,7 +81,11 @@ async def download_attachment(
     )
 
 
-@router.post("/{issue_id}/attachments/{attachment_id}/remove", response_model=Message)
+@router.post(
+    "/{issue_id}/attachments/{attachment_id}/remove",
+    response_model=Message,
+    operation_id="attachments_remove",
+)
 async def remove_attachment(
     issue_id: uuid.UUID,
     attachment_id: uuid.UUID,

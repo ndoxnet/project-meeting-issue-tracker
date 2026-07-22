@@ -11,6 +11,10 @@ class LoginRequest(BaseModel):
     username: str = Field(min_length=1, max_length=255)
     password: str = Field(min_length=1, max_length=128)
 
+    model_config = {
+        "json_schema_extra": {"examples": [{"username": "editor1", "password": "example-password"}]}
+    }
+
 
 class TokenResponse(BaseModel):
     access_token: str

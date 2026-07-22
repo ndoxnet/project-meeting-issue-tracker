@@ -29,9 +29,11 @@ from app.schemas.masterdata import (
 from app.services import masterdata as svc
 
 # Named master data (read: any role; write: admin).
-categories_router = make_named_router(Category, "category")
-responsible_parties_router = make_named_router(ResponsibleParty, "responsible_party")
-meetings_router = make_named_router(Meeting, "meeting")
+categories_router = make_named_router(Category, "category", "categories")
+responsible_parties_router = make_named_router(
+    ResponsibleParty, "responsible_party", "responsible_parties"
+)
+meetings_router = make_named_router(Meeting, "meeting", "meetings")
 
 
 # ---- Meeting occurrences ----
@@ -43,7 +45,9 @@ def _page_meta(page: int, page_size: int, total: int) -> PageMeta:
     return PageMeta(page=page, page_size=page_size, total=total, pages=pages)
 
 
-@occurrences_router.get("", response_model=Page[MeetingOccurrenceResponse])
+@occurrences_router.get(
+    "", response_model=Page[MeetingOccurrenceResponse], operation_id="meeting_occurrences_list"
+)
 async def list_occurrences(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),
@@ -60,7 +64,12 @@ async def list_occurrences(
     )
 
 
-@occurrences_router.post("", response_model=MeetingOccurrenceResponse, status_code=201)
+@occurrences_router.post(
+    "",
+    response_model=MeetingOccurrenceResponse,
+    status_code=201,
+    operation_id="meeting_occurrences_create",
+)
 async def create_occurrence(
     payload: MeetingOccurrenceCreate,
     session: AsyncSession = Depends(get_db),
@@ -71,7 +80,9 @@ async def create_occurrence(
     return MeetingOccurrenceResponse.model_validate(occ)
 
 
-@occurrences_router.get("/{occ_id}", response_model=MeetingOccurrenceResponse)
+@occurrences_router.get(
+    "/{occ_id}", response_model=MeetingOccurrenceResponse, operation_id="meeting_occurrences_get"
+)
 async def get_occurrence(
     occ_id: uuid.UUID,
     session: AsyncSession = Depends(get_db),
@@ -83,7 +94,9 @@ async def get_occurrence(
     return MeetingOccurrenceResponse.model_validate(occ)
 
 
-@occurrences_router.patch("/{occ_id}", response_model=MeetingOccurrenceResponse)
+@occurrences_router.patch(
+    "/{occ_id}", response_model=MeetingOccurrenceResponse, operation_id="meeting_occurrences_update"
+)
 async def update_occurrence(
     occ_id: uuid.UUID,
     payload: MeetingOccurrenceUpdate,
@@ -99,7 +112,7 @@ async def update_occurrence(
 settings_router = APIRouter()
 
 
-@settings_router.get("", response_model=list[AppSettingResponse])
+@settings_router.get("", response_model=list[AppSettingResponse], operation_id="settings_list")
 async def list_settings(
     session: AsyncSession = Depends(get_db),
     _: User = Depends(require_any),
@@ -108,7 +121,7 @@ async def list_settings(
     return [AppSettingResponse.model_validate(r) for r in rows]
 
 
-@settings_router.get("/{key}", response_model=AppSettingResponse)
+@settings_router.get("/{key}", response_model=AppSettingResponse, operation_id="settings_get")
 async def get_setting(
     key: str,
     session: AsyncSession = Depends(get_db),
@@ -120,7 +133,7 @@ async def get_setting(
     return AppSettingResponse.model_validate(setting)
 
 
-@settings_router.patch("/{key}", response_model=AppSettingResponse)
+@settings_router.patch("/{key}", response_model=AppSettingResponse, operation_id="settings_update")
 async def update_setting(
     key: str,
     payload: AppSettingUpdate,

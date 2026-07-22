@@ -16,7 +16,7 @@ from app.services import auth as auth_service
 router = APIRouter()
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=TokenResponse, operation_id="auth_login")
 async def login(
     payload: LoginRequest,
     session: AsyncSession = Depends(get_db),
@@ -32,7 +32,7 @@ async def login(
     )
 
 
-@router.post("/logout", response_model=Message)
+@router.post("/logout", response_model=Message, operation_id="auth_logout")
 async def logout(
     session: AsyncSession = Depends(get_db),
     ctx: RequestContext = Depends(get_request_context),
@@ -43,6 +43,6 @@ async def logout(
     return Message(message="Logged out. Discard the access token on the client.")
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me", response_model=UserResponse, operation_id="auth_get_current_user")
 async def me(user: User = Depends(get_current_active_user)) -> UserResponse:
     return UserResponse.model_validate(user)

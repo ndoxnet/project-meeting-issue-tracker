@@ -19,7 +19,7 @@ from app.services import report as report_service
 router = APIRouter()
 
 
-@router.get("/issues.csv")
+@router.get("/issues.csv", operation_id="reports_issues_csv")
 async def export_issues_csv(
     search: str | None = Query(None, max_length=200),
     status: list[str] | None = Query(None),
