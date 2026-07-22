@@ -11,8 +11,12 @@
 - Only the frontend binds a host port: `127.0.0.1:5200`.
 
 ## Build & artifact strategy (see ADR-004)
-1. **Build the frontend image OUTSIDE the VPS** (developer machine or CI):
-   `docker build -t <registry>/issue-tracker-frontend:<tag> ./frontend`
+1. **Build the frontend image OUTSIDE the VPS** (developer machine or CI). Prereqs
+   in CI before `docker build`: `npm ci`, `npm run generate:api` (+ `npm run
+   check:api` drift guard), `npm run lint`, `npm run typecheck`, `npm run test`,
+   then `docker build -t <registry>/issue-tracker-frontend:<tag> ./frontend`.
+   The Dockerfile uses `npm ci` (committed `package-lock.json`) and produces no
+   production sourcemaps.
 2. Optionally build the backend image off-VPS too (smaller/safer), or build it on
    the VPS only if resources allow at a quiet time.
 3. **Push** images to a registry the VPS can pull from.

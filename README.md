@@ -1,10 +1,11 @@
 # Project Meeting Issue Tracker
 
 > Concept by MrHan (08974747477)
-> **Status: Phase 2B.6 — v1 API contract frozen.** Backend feature-complete and
-> validated (134 SQLite + 34 PostgreSQL + 24 contract tests; ruff+mypy clean). The
-> OpenAPI contract and frontend handoff are published under `docs/api/`. No
-> production stack is running; the frontend is not integrated (Phase 2C).
+> **Status: Phase 2C.1 — frontend auth foundation & application shell scaffolded.**
+> Backend contract frozen (Phase 2B.6). The frontend now has a memory-only auth
+> flow, typed API client, route/role guards, and a responsive shell (domain
+> features are placeholders). Frontend runtime validation (install/build/tests) is
+> **pending off-VPS** (ADR-004). No production stack running.
 
 ## API contract (frozen v1)
 - Spec: [`docs/api/openapi.json`](docs/api/openapi.json) (+ `.yaml`) — base path `/api/v1`.

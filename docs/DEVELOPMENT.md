@@ -39,10 +39,17 @@ run against PostgreSQL on the VPS.
 ## Frontend (local, OFF-VPS)
 ```bash
 cd frontend
-npm install                 # off-VPS only (ADR-004)
-npm run dev                 # Vite dev server
-npm run build               # production build — NEVER on the production VPS
+npm install                 # off-VPS only (ADR-004); creates & commits package-lock.json
+npm run generate:api        # generate src/api/generated/schema.ts from ../docs/api/openapi.json
+npm run dev                 # Vite dev server (proxies /api to http://127.0.0.1:8000)
+npm run lint                # ESLint
+npm run typecheck           # tsc --noEmit
+npm run test                # Vitest + RTL + MSW
+npm run check:api           # fail if generated API types are stale vs the contract
+npm run build               # tsc -b && vite build — NEVER on the production VPS
 ```
+Architecture: `docs/FRONTEND_ARCHITECTURE.md`. Security: `docs/FRONTEND_SECURITY.md`.
+Auth is memory-only (ADR-017); a browser refresh requires re-login.
 
 ## Migrations (Alembic)
 ```bash

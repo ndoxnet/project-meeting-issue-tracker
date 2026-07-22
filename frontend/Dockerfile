@@ -10,10 +10,14 @@
 # ---- Build stage (runs off-VPS) ----
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package.json ./
-# No committed lockfile in Phase 1; install resolves compatible versions.
-RUN npm install
+# Install from the committed lockfile for reproducible builds. The lockfile is
+# generated off-VPS (`npm install`) and committed — `npm ci` requires it.
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
+# `npm run build` = `tsc -b && vite build` (typecheck then bundle). The committed
+# generated API types (src/api/generated/schema.ts) must be current — verify with
+# `npm run check:api` in CI before building. No production sourcemaps.
 RUN npm run build
 
 # ---- Runtime stage (Nginx, non-root) ----
