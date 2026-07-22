@@ -28,7 +28,7 @@ CURRENT_STATE_NOT_REVERSED = "CURRENT_STATE_NOT_REVERSED"
 async def create_follow_up(
     session: AsyncSession, *, issue_id: uuid.UUID, data, actor: User, ctx: RequestContext
 ) -> IssueUpdate:
-    issue = await issue_service.get_issue_or_404(session, issue_id)
+    issue = await issue_service.get_issue_or_404(session, issue_id, for_update=True)
     if issue.archived_at is not None:
         raise DomainError(
             "ISSUE_ARCHIVED", "Archived issue cannot receive updates", http_status=409

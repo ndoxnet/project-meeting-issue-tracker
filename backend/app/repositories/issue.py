@@ -7,6 +7,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import Select, and_, case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -59,7 +60,15 @@ class IssueListFilters:
     sort_order: str = "asc"
 
 
-async def get_issue(session: AsyncSession, issue_id: uuid.UUID) -> Issue | None:
+async def get_issue(
+    session: AsyncSession, issue_id: uuid.UUID, *, for_update: bool = False
+) -> Issue | None:
+    """Fetch an issue. With for_update=True, take a row lock (SELECT ... FOR
+    UPDATE) so concurrent state transitions serialize (ADR-016). On SQLite the
+    lock clause is ignored; the DB write-lock still serializes writers."""
+    if for_update:
+        stmt = select(Issue).where(Issue.id == issue_id).with_for_update()
+        return (await session.execute(stmt)).scalar_one_or_none()
     return await session.get(Issue, issue_id)
 
 
@@ -218,23 +227,34 @@ async def find_possible_duplicates(
 
 
 async def next_issue_number(session: AsyncSession, year: int) -> int:
-    """Increment and return the per-year counter under a row lock.
+    """Atomically allocate the next per-year sequence number (ADR-011).
 
-    On PostgreSQL the row is locked with FOR UPDATE; on SQLite the lock clause is
-    ignored but the database-level write lock serializes writers. Full concurrency
-    assurance is verified by the PostgreSQL integration test (pending)."""
-    row = (
-        await session.execute(
-            select(IssueCounter).where(IssueCounter.year == year).with_for_update()
+    Uses INSERT ... ON CONFLICT (year) DO UPDATE SET last_number = last_number + 1
+    RETURNING last_number. This is concurrency-safe even for the FIRST issue of a
+    year: a plain SELECT ... FOR UPDATE would lock nothing when the counter row
+    does not yet exist, letting concurrent creators collide. The upsert serializes
+    concurrent increments on the row (PostgreSQL) and returns a distinct number to
+    each transaction. Portable to SQLite (>= 3.35, RETURNING) used in tests."""
+    dialect = session.bind.dialect.name
+    if dialect == "postgresql":
+        from sqlalchemy.dialects.postgresql import insert as _pg_insert
+
+        insert_fn: Any = _pg_insert
+    else:
+        from sqlalchemy.dialects.sqlite import insert as _sqlite_insert
+
+        insert_fn = _sqlite_insert
+
+    stmt = (
+        insert_fn(IssueCounter)
+        .values(year=year, last_number=1)
+        .on_conflict_do_update(
+            index_elements=[IssueCounter.year],
+            set_={"last_number": IssueCounter.last_number + 1},
         )
-    ).scalar_one_or_none()
-    if row is None:
-        row = IssueCounter(year=year, last_number=0)
-        session.add(row)
-        await session.flush()
-    row.last_number += 1
-    await session.flush()
-    return row.last_number
+        .returning(IssueCounter.last_number)
+    )
+    return int((await session.execute(stmt)).scalar_one())
 
 
 # ---- issue updates ----

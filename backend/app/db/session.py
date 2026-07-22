@@ -28,11 +28,20 @@ def get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
         settings = get_settings()
-        _engine = create_async_engine(
-            settings.DATABASE_URL,
-            echo=False,
-            pool_pre_ping=True,
-        )
+        kwargs: dict = {
+            "echo": False,  # never echo SQL (avoids leaking data/credentials)
+            "pool_pre_ping": True,
+        }
+        # Conservative pool for the resource-constrained VPS (Phase 2B.5). SQLite
+        # (tests) uses a non-queue pool, so these options don't apply there.
+        if settings.DATABASE_URL.startswith("postgresql"):
+            kwargs.update(
+                pool_size=5,
+                max_overflow=5,
+                pool_timeout=30,
+                pool_recycle=1800,
+            )
+        _engine = create_async_engine(settings.DATABASE_URL, **kwargs)
     return _engine
 
 

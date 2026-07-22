@@ -138,8 +138,10 @@ async def _require_occurrence(session: AsyncSession, occ_id: uuid.UUID | None) -
         )
 
 
-async def get_issue_or_404(session: AsyncSession, issue_id: uuid.UUID) -> Issue:
-    issue = await issue_repo.get_issue(session, issue_id)
+async def get_issue_or_404(
+    session: AsyncSession, issue_id: uuid.UUID, *, for_update: bool = False
+) -> Issue:
+    issue = await issue_repo.get_issue(session, issue_id, for_update=for_update)
     if issue is None:
         raise DomainError("ISSUE_NOT_FOUND", "Issue not found", http_status=404)
     return issue
@@ -230,7 +232,7 @@ async def create_issue(
 async def update_metadata(
     session: AsyncSession, *, issue_id: uuid.UUID, data, actor: User, ctx: RequestContext
 ) -> Issue:
-    issue = await get_issue_or_404(session, issue_id)
+    issue = await get_issue_or_404(session, issue_id, for_update=True)
     if issue.archived_at is not None:
         raise DomainError("ISSUE_ARCHIVED", "Issue is archived", http_status=409)
     if issue.status == IssueStatus.CLOSED.value:
@@ -318,7 +320,7 @@ async def update_metadata(
 async def change_status(
     session: AsyncSession, *, issue_id: uuid.UUID, data, actor: User, ctx: RequestContext
 ) -> Issue:
-    issue = await get_issue_or_404(session, issue_id)
+    issue = await get_issue_or_404(session, issue_id, for_update=True)
     if issue.archived_at is not None:
         raise DomainError("ISSUE_ARCHIVED", "Issue is archived", http_status=409)
 
@@ -369,7 +371,7 @@ async def change_status(
 async def close_issue(
     session: AsyncSession, *, issue_id: uuid.UUID, data, actor: User, ctx: RequestContext
 ) -> Issue:
-    issue = await get_issue_or_404(session, issue_id)
+    issue = await get_issue_or_404(session, issue_id, for_update=True)
     if issue.archived_at is not None:
         raise DomainError("ISSUE_ARCHIVED", "Issue is archived", http_status=409)
     if issue.status == IssueStatus.CLOSED.value:
@@ -419,7 +421,7 @@ async def close_issue(
 async def reopen_issue(
     session: AsyncSession, *, issue_id: uuid.UUID, data, actor: User, ctx: RequestContext
 ) -> Issue:
-    issue = await get_issue_or_404(session, issue_id)
+    issue = await get_issue_or_404(session, issue_id, for_update=True)
     if issue.archived_at is not None:
         raise DomainError("ISSUE_ARCHIVED", "Restore the issue before reopening", http_status=409)
     if issue.status != IssueStatus.CLOSED.value:
@@ -486,7 +488,7 @@ async def reopen_issue(
 async def archive_issue(
     session: AsyncSession, *, issue_id: uuid.UUID, reason: str, actor: User, ctx: RequestContext
 ) -> Issue:
-    issue = await get_issue_or_404(session, issue_id)
+    issue = await get_issue_or_404(session, issue_id, for_update=True)
     if issue.archived_at is not None:
         raise DomainError("ISSUE_ARCHIVED", "Issue is already archived", http_status=409)
     before = _issue_public(issue)
@@ -515,7 +517,7 @@ async def restore_issue(
     actor: User,
     ctx: RequestContext,
 ) -> Issue:
-    issue = await get_issue_or_404(session, issue_id)
+    issue = await get_issue_or_404(session, issue_id, for_update=True)
     if issue.archived_at is None:
         raise DomainError("VALIDATION_ERROR", "Issue is not archived", http_status=409)
     before = _issue_public(issue)

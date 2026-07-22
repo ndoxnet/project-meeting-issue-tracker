@@ -12,9 +12,10 @@ from app.db.base import Base
 class IssueCounter(Base):
     """Per-year sequence backing transaction-safe issue codes (ADR-011).
 
-    The row for a year is locked (SELECT ... FOR UPDATE on PostgreSQL) while the
-    counter is incremented, so concurrent issue creation cannot mint duplicate
-    numbers. ``issues.issue_code`` UNIQUE is the final guard.
+    Allocated via an atomic upsert (INSERT ... ON CONFLICT (year) DO UPDATE SET
+    last_number = last_number + 1 RETURNING last_number), which serializes
+    concurrent increments even for the first issue of a year. ``issues.issue_code``
+    UNIQUE is the final guard.
     """
 
     __tablename__ = "issue_counters"
