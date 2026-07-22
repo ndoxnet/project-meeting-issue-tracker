@@ -61,11 +61,14 @@ alembic upgrade head                                    # apply
   134 tests cover auth, RBAC, issue lifecycle, follow-up/void, attachments,
   dashboard (overdue/stagnant/due-this-week), and CSV. Single-process only
   (no `pytest-xdist`); Argon2 makes the suite ~3 min.
-- **PostgreSQL integration tests** are skipped by default and only run against a
-  throwaway database:
-  `INTEGRATION_DATABASE_URL=postgresql+asyncpg://… pytest -m postgresql`.
-  They are where concurrency, `FOR UPDATE` row locking, JSONB/INET, and full
-  migration behavior are proven — do NOT point them at production.
+- **PostgreSQL integration tests** (`tests/integration/`, 34 tests) are skipped
+  unless a test DB URL is set, and run only against a throwaway database:
+  `POSTGRES_TEST_DATABASE_URL=postgresql+asyncpg://… pytest -m postgresql`
+  (`INTEGRATION_DATABASE_URL` also accepted). They prove concurrent issue-code
+  generation (atomic upsert), `FOR UPDATE` lifecycle locking, JSONB/INET,
+  DB-level constraints, transaction atomicity, and full migration behavior. The
+  isolated-container procedure is in `docs/DEPLOYMENT.md`. Do NOT point them at
+  production or the AI-XAUUSD database.
 
 ## Commit rules
 - Conventional-style messages: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`,

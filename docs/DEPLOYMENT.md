@@ -58,3 +58,25 @@
 ## Log rotation
 - Container stdout/stderr: configure Docker `json-file` log driver with
   `max-size`/`max-file` (documented at deploy time) to bound disk usage.
+
+## Connection pool (production)
+The backend async engine uses a conservative pool for the resource-constrained
+VPS (`app/db/session.py`, applied only for `postgresql` URLs):
+`pool_size=5`, `max_overflow=5`, `pool_timeout=30`, `pool_recycle=1800`,
+`pool_pre_ping=True`, `echo=False`. Raise `pool_size`/`max_overflow` only if
+sustained concurrency warrants it and RAM allows. `echo` stays False so SQL and
+credentials never reach logs.
+
+## PostgreSQL validation (Phase 2B.5) — isolated, throwaway
+Validate the backend against real PostgreSQL WITHOUT touching any existing
+database or exposing a public port:
+1. Resource gate: `uptime; free -h; df -h /` — require ≥1.5 GB RAM free, no swap
+   thrashing, ≥10 GB disk.
+2. Start an isolated container (unique project/name/network, tmpfs data, loopback
+   port only): `docker compose -p issue-tracker-pgtest -f <tmp compose> up -d`.
+3. Migrate + verify: `alembic upgrade head`, `alembic check`,
+   `alembic downgrade base`, `alembic upgrade head`.
+4. `POSTGRES_TEST_DATABASE_URL=… pytest -m postgresql -q`.
+5. Cleanup: `docker compose -p issue-tracker-pgtest -f <tmp compose> down -v`,
+   remove the temp env/compose files, confirm container count returns to baseline.
+Never run this against the production DB or the AI-XAUUSD PostgreSQL.

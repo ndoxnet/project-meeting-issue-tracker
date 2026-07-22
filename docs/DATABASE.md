@@ -398,5 +398,16 @@ Every transition writes an `issue_updates` row and an `audit_logs` row.
   `(status, last_update_at)`, `(archived_at, status)`, `(category_id, status)`,
   `(responsible_party_id, status)` — write cost accepted for register/dashboard
   read speed.
-- Validated on SQLite (upgrade `-1`/`base` + `alembic check` parity). PostgreSQL
-  concurrency (row-lock `FOR UPDATE`) is proven by the pending integration test.
+- Validated on SQLite (upgrade `-1`/`base` + `alembic check` parity).
+
+### Phase 2B.5 — PostgreSQL validation (isolated container)
+- Full Alembic `upgrade head` → `check` (parity) → `downgrade base` →
+  `upgrade head` all succeed on PostgreSQL 16. 11 app tables + `alembic_version`;
+  confirmed types: `jsonb` (audit before/after, app_settings.value), `inet`
+  (audit ip), `timestamptz`, `uuid` PK, string-backed enum VARCHAR. Constraint
+  census: 6 CHECK, 19 FK, 12 PK, 6 UNIQUE; all 5 composite issue indexes present.
+- **Concurrency:** issue-code allocation uses an atomic upsert (ADR-011); 20 and
+  50 concurrent creates yield unique contiguous codes with no duplicates. State
+  transitions use `SELECT … FOR UPDATE` (ADR-016); double-close resolves to one
+  success + one `ISSUE_ALREADY_CLOSED`.
+- Not yet run against the production VPS database.

@@ -3,6 +3,31 @@
 > Concept by MrHan (08974747477)
 All notable changes to this project are documented here.
 
+## [0.3.1] — Phase 2B.5 — PostgreSQL Integration & Concurrency Validation
+### Fixed
+- **Issue-code concurrency (critical):** replaced the counter's `SELECT … FOR
+  UPDATE` (which locks nothing when the year's row doesn't exist yet, letting the
+  first-of-year concurrent creators collide) with an **atomic upsert**
+  (`INSERT … ON CONFLICT (year) DO UPDATE … RETURNING`). Proven with 20 and 50
+  concurrent creates → unique, contiguous codes, no duplicates (ADR-011 updated).
+  Code-only fix; no migration change.
+### Added
+- **Pessimistic row locking (ADR-016):** state transitions (metadata/status/close/
+  reopen/archive/restore/follow-up) take `SELECT … FOR UPDATE` on the issue row, so
+  concurrent lifecycle ops serialize (double-close → one success + one
+  `ISSUE_ALREADY_CLOSED`).
+- **Conservative production pool** for PostgreSQL: pool_size 5 / overflow 5 /
+  timeout 30 / recycle 1800 / pre_ping; `echo=False`.
+- **34 PostgreSQL integration tests** (`pytest -m postgresql`): full Alembic
+  upgrade/downgrade/re-upgrade + parity, JSONB/INET types, DB-level check/unique/FK
+  constraints, concurrent code generation (20 & 50), year partitioning, lifecycle
+  races, transaction-atomicity fault injection, dashboard/CSV/attachment queries,
+  case-insensitive normalization — all against an isolated, tmpfs, loopback-only
+  container. Test transport uses `raise_app_exceptions=False` so 500s are asserted.
+### Validation
+- Existing 134 SQLite tests still pass; ruff + mypy clean; test container cleaned up
+  and container count returned to baseline; no existing service touched.
+
 ## [0.3.0] — Phase 2B — Issue Lifecycle, History, Attachments, Dashboard, Export
 ### Added
 - **Issue codes:** `issue_counters` table (11th table) + transaction-safe

@@ -1,10 +1,10 @@
 # Project Meeting Issue Tracker
 
 > Concept by MrHan (08974747477)
-> **Status: Phase 2B — issue lifecycle, follow-up history, attachments,
-> dashboard & CSV export.** Backend feature-complete for the MVP and tested
-> (134 tests, ruff+mypy clean; 3 PostgreSQL integration tests pending). No
-> production stack is running; the frontend is not integrated (Phase 2C).
+> **Status: Phase 2B.5 — validated against real PostgreSQL.** Backend
+> feature-complete for the MVP; 134 SQLite tests + 34 PostgreSQL integration tests
+> (concurrency, migration, JSONB/INET, constraints, atomicity) pass; ruff+mypy
+> clean. No production stack is running; the frontend is not integrated (Phase 2C).
 
 Internal web app for the Project Control team to record, monitor, and control
 issues and follow-ups discussed across many project meetings.
@@ -72,12 +72,10 @@ push the image; the VPS only pulls it (see
 `make help` lists tasks. `compose-build` / `compose-up` are intentionally guarded
 against running on the VPS in Phase 1.
 
-## Known limitations (Phase 2B)
-- Issue-code concurrency (row locking `FOR UPDATE`) is proven only by the
-  PostgreSQL integration tests, which are **pending** (`pytest -m postgresql`);
-  SQLite validates logic, not concurrency.
-- Migrations validated on SQLite (upgrade/downgrade + `alembic check`); NOT run on
-  PostgreSQL / the VPS.
+## Known limitations (Phase 2B.5)
+- Migrations are validated on both SQLite and an **isolated PostgreSQL 16**
+  container (upgrade/downgrade/re-upgrade + `alembic check`), but NOT yet run on
+  the production VPS database.
 - Access tokens are not revocable server-side; logout = client discards token
   (ADR-009).
 - Attachment type check is signature/magic-byte based (no deep parsing / AV).

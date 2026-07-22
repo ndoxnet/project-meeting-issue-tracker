@@ -95,3 +95,13 @@
 - **Sort safety:** issue-list sorting uses a fixed column allow-list; arbitrary
   request-supplied column names are ignored (no SQL injection via `sort_by`).
 - **Void (ADR-013):** Admin-only; never rewinds current state silently.
+
+## Phase 2B.5 — integration test credential/data handling
+- The PostgreSQL integration container uses a **randomly generated** test password
+  (`secrets.token_urlsafe`) held only in a `chmod 600` temp env file outside the
+  repo; it is never committed, never printed in full, and never logged.
+- `echo=False` on the engine and no SQL logging ensure `DATABASE_URL`/credentials
+  never reach logs; connection errors are not surfaced with the URL.
+- The test container is isolated (unique project/name/network, tmpfs data,
+  `127.0.0.1`-only port) and fully removed (`down -v`) after validation, along with
+  the temp env/compose files. It never touches the production or AI-XAUUSD DB.
