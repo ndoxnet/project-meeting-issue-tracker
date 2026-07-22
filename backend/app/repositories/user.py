@@ -1,5 +1,6 @@
 # Concept by MrHan (08974747477)
 """User data access. Thin query helpers over the session — no generic framework."""
+
 from __future__ import annotations
 
 import uuid
@@ -61,10 +62,10 @@ async def list_users(
 
     total = (await session.execute(count_stmt)).scalar_one()
     rows = (
-        await session.execute(
-            base.order_by(User.created_at.desc()).offset(offset).limit(limit)
-        )
-    ).scalars().all()
+        (await session.execute(base.order_by(User.created_at.desc()).offset(offset).limit(limit)))
+        .scalars()
+        .all()
+    )
     return list(rows), int(total)
 
 

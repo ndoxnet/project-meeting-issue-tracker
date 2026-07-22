@@ -4,6 +4,7 @@
 The naming convention produces stable, predictable constraint/index names so
 Alembic autogenerate output is deterministic across runs.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -30,9 +31,7 @@ class Base(DeclarativeBase):
 class UUIDPKMixin:
     """UUID primary key. Portable: native UUID on PostgreSQL, CHAR on others."""
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
 
 class TimestampMixin:

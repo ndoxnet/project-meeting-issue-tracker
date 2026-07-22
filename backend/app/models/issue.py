@@ -6,6 +6,7 @@ so the initial migration is complete. IssueUpdate is append-only (enforced in th
 service layer in Phase 2B); no delete-cascade is placed on it that could remove
 history.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -16,6 +17,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -41,6 +43,13 @@ class Issue(UUIDPKMixin, Base):
             f"status IN ({', '.join(repr(v) for v in values(IssueStatus))})",
             name="status_valid",
         ),
+        # Composite indexes for the common register/dashboard access patterns
+        # (write cost accepted for read speed on filtered lists — see DATABASE.md).
+        Index("ix_issues_status_due_date", "status", "due_date"),
+        Index("ix_issues_status_last_update_at", "status", "last_update_at"),
+        Index("ix_issues_archived_at_status", "archived_at", "status"),
+        Index("ix_issues_category_id_status", "category_id", "status"),
+        Index("ix_issues_responsible_party_id_status", "responsible_party_id", "status"),
     )
 
     issue_code: Mapped[str] = mapped_column(String(30), nullable=False, unique=True)
@@ -78,27 +87,15 @@ class Issue(UUIDPKMixin, Base):
 
     closed_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     closure_note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    reopened_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    reopened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    updated_by: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("users.id"), nullable=True
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    archived_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    archived_by: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("users.id"), nullable=True
-    )
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    archived_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
 
 class IssueUpdate(UUIDPKMixin, Base):
@@ -114,9 +111,7 @@ class IssueUpdate(UUIDPKMixin, Base):
     )
 
     # No ondelete cascade: history must never be removed by deleting an issue.
-    issue_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("issues.id"), nullable=False, index=True
-    )
+    issue_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("issues.id"), nullable=False, index=True)
     update_date: Mapped[date] = mapped_column(Date, nullable=False)
     meeting_occurrence_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("meeting_occurrences.id"), nullable=True
@@ -140,15 +135,9 @@ class IssueUpdate(UUIDPKMixin, Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, index=True
     )
-    updated_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Correction mechanism (Admin-only, Phase 2B): void + replacement update.
-    voided_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    voided_by: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("users.id"), nullable=True
-    )
+    voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    voided_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     void_reason: Mapped[str | None] = mapped_column(Text, nullable=True)

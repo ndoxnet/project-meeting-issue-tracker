@@ -1,5 +1,6 @@
 # Concept by MrHan (08974747477)
 """Concrete named routers + meeting occurrences + app settings."""
+
 from __future__ import annotations
 
 import uuid
@@ -90,9 +91,7 @@ async def update_occurrence(
     ctx: RequestContext = Depends(get_request_context),
     actor: User = Depends(require_editor),
 ) -> MeetingOccurrenceResponse:
-    occ = await svc.update_occurrence(
-        session, occ_id=occ_id, data=payload, actor=actor, ctx=ctx
-    )
+    occ = await svc.update_occurrence(session, occ_id=occ_id, data=payload, actor=actor, ctx=ctx)
     return MeetingOccurrenceResponse.model_validate(occ)
 
 
@@ -129,7 +128,5 @@ async def update_setting(
     ctx: RequestContext = Depends(get_request_context),
     actor: User = Depends(require_admin),
 ) -> AppSettingResponse:
-    setting = await svc.update_setting(
-        session, key=key, value=payload.value, actor=actor, ctx=ctx
-    )
+    setting = await svc.update_setting(session, key=key, value=payload.value, actor=actor, ctx=ctx)
     return AppSettingResponse.model_validate(setting)

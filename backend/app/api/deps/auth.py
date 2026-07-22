@@ -4,6 +4,7 @@
 Authorization uses the CURRENT database role of the user (fetched fresh on every
 request), not just the JWT claim — the database is the source of truth.
 """
+
 from __future__ import annotations
 
 import uuid

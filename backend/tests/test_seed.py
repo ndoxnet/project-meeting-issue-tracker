@@ -27,7 +27,5 @@ async def test_seed_is_idempotent(db_session) -> None:
         "meetings": 0,
         "settings": 0,
     }
-    total = (
-        await db_session.execute(select(func.count()).select_from(Category))
-    ).scalar_one()
+    total = (await db_session.execute(select(func.count()).select_from(Category))).scalar_one()
     assert total == len(CATEGORIES)

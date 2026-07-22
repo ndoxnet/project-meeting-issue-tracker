@@ -6,6 +6,7 @@ secret is stored in the repo). Imports all model metadata for autogenerate.
 Production is PostgreSQL (asyncpg). This file is NOT executed against any
 production database in Phase 2A.
 """
+
 from __future__ import annotations
 
 import asyncio

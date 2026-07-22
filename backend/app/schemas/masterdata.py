@@ -1,6 +1,7 @@
 # Concept by MrHan (08974747477)
 """Schemas for master data: categories, responsible parties, meetings,
 meeting occurrences, and app settings."""
+
 from __future__ import annotations
 
 import uuid

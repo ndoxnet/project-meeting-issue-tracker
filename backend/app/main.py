@@ -5,6 +5,7 @@ Phase 2A: auth, users, and master data are wired. The database engine is created
 lazily (first request), never at import time. Attachments/issue business logic
 arrive in Phase 2B.
 """
+
 from __future__ import annotations
 
 from collections.abc import AsyncIterator

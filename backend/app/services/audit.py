@@ -6,6 +6,7 @@ does NOT commit. The calling service/endpoint commits once at its transaction
 boundary, so the audit row and the business change succeed or fail together
 (no half-successful operations). before/after payloads are redacted.
 """
+
 from __future__ import annotations
 
 import uuid

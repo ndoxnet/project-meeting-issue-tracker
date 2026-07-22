@@ -5,6 +5,7 @@ Production is PostgreSQL (JSONB, INET). Tests use SQLite, which lacks those
 types, so we declare cross-dialect variants that degrade cleanly for tests
 without weakening the PostgreSQL schema.
 """
+
 from __future__ import annotations
 
 from sqlalchemy import JSON, String

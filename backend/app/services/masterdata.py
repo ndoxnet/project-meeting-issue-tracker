@@ -1,6 +1,7 @@
 # Concept by MrHan (08974747477)
 """Master-data service: categories, responsible parties, meetings, occurrences,
 settings. Uniqueness, no hard delete (activate/deactivate), and audit on change."""
+
 from __future__ import annotations
 
 import uuid

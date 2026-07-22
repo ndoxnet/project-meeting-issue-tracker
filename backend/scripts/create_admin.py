@@ -7,6 +7,7 @@ password (passlib), and inserts an ADMIN user if one does not already exist.
 
 The password is NEVER hardcoded and NEVER printed/logged.
 """
+
 from __future__ import annotations
 
 

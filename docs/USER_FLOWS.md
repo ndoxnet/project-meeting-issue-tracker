@@ -56,3 +56,17 @@
 1. A dashboard card / filter lists issues with no update beyond the stagnant
    threshold (default 7 days; configurable). If never updated, `raised_date` is
    the baseline. A clear warning is shown.
+
+## Derived status definitions (canonical — see ADR-015)
+All dates use the local display timezone (`Asia/Jakarta`). Archived issues are
+excluded from all dashboard views.
+- **Overdue:** status ≠ CLOSED, not archived, `due_date` set, `due_date < today`.
+  (Due *today* is not overdue.)
+- **Stagnant:** status ≠ CLOSED, not archived, last activity older than
+  `STAGNANT_DAYS`. Last activity = last follow-up if any, else `raised_date`
+  (the initial "Issue raised" event does not count as a follow-up).
+- **Due this week:** active, not closed, `today ≤ due_date ≤ today + 7` inclusive.
+- **Closed this month:** CLOSED with `closed_date` in the current local month.
+- **Void semantics:** a voided update stays in history and never rewinds current
+  state; if it had changed status/due/PIC, the API warns
+  `CURRENT_STATE_NOT_REVERSED` and a corrective follow-up must be posted.

@@ -5,6 +5,7 @@ Never stores or logs raw tokens or passwords. Failed logins are audited with a
 null actor and no password material. The audit row is committed together with any
 state change (or on its own for a failed attempt).
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -70,9 +71,7 @@ async def authenticate(
     return user, token, expires_in
 
 
-async def record_logout(
-    session: AsyncSession, *, user: User, ctx: RequestContext
-) -> None:
+async def record_logout(session: AsyncSession, *, user: User, ctx: RequestContext) -> None:
     """Audit a logout. Server-side token revocation is NOT implemented (MVP);
     the client is responsible for discarding the token."""
     record_audit(

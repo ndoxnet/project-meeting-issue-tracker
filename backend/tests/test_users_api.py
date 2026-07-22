@@ -94,9 +94,7 @@ async def test_role_update(client, admin_user, sessionmaker) -> None:
 
 async def test_prevent_deactivating_only_admin(client, admin_user) -> None:
     # admin_user is the only active admin; deactivation must be refused.
-    resp = await client.post(
-        f"{USERS}/{admin_user.id}/deactivate", headers=auth_header(admin_user)
-    )
+    resp = await client.post(f"{USERS}/{admin_user.id}/deactivate", headers=auth_header(admin_user))
     assert resp.status_code == 422
     assert resp.json()["error"]["code"] == "VALIDATION_ERROR"
 

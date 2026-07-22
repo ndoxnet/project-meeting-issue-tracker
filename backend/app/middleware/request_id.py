@@ -5,6 +5,7 @@ Accepts a client-provided X-Request-ID when it is a sane, bounded value;
 otherwise generates a UUID. Stores it on request.state and echoes it on the
 response so it can be correlated with audit logs and structured access logs.
 """
+
 from __future__ import annotations
 
 import re

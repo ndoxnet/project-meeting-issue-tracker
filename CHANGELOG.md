@@ -3,6 +3,33 @@
 > Concept by MrHan (08974747477)
 All notable changes to this project are documented here.
 
+## [0.3.0] — Phase 2B — Issue Lifecycle, History, Attachments, Dashboard, Export
+### Added
+- **Issue codes:** `issue_counters` table (11th table) + transaction-safe
+  `ISS-YYYY-NNNN` generation with row locking (ADR-011). Migration `bbba43c5c105`.
+- **Issue APIs:** list (rich filters, safe sort allow-list, pagination, search),
+  create (with duplicate warning), detail, metadata PATCH, status change, close,
+  reopen, archive, restore.
+- **Lifecycle:** central state machine (ADR-012); every transition writes an
+  append-only `issue_update` + audit, atomically.
+- **Follow-up history:** append-only updates with status/due/PIC before-after
+  capture; Admin void without state rewind (ADR-013, `CURRENT_STATE_NOT_REVERSED`).
+- **Attachments:** secure upload (magic-byte sniff, size cap, filename sanitize,
+  random stored name, SHA-256, path-traversal-safe), authorized download
+  (attachment disposition), soft remove (ADR-014).
+- **Dashboard:** summary, overdue, stagnant, due-this-week, recently-updated,
+  by-category, by-responsible-party, opened-vs-closed (ADR-015).
+- **Export:** filtered `issues.csv` with UTF-8 BOM, formula-injection escaping,
+  10k row cap, audited (filters + count, never the body).
+- 5 composite indexes on `issues`; new domain error codes; 5 ADRs (011–015).
+- ~66 new tests (134 total passing; 3 PostgreSQL integration tests skipped).
+
+### Limitations (documented)
+- Concurrency/row-lock behavior proven only on PostgreSQL integration tests
+  (pending, `pytest -m postgresql`); SQLite validates logic, not concurrency.
+- Attachment sniffing is signature-based (no deep parsing / AV).
+- Notifications, frontend, deployment → later phases.
+
 ## [0.2.0] — Phase 2A — Database, Auth, RBAC, Users, Master Data
 ### Added
 - **Database:** async SQLAlchemy 2 engine/session (lazy), naming-convention

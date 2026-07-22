@@ -5,6 +5,7 @@ Any key whose (lowercased) name matches a sensitive term is replaced with a
 constant marker. Applied before writing audit before/after data and before any
 structured logging of request context.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -33,10 +34,7 @@ def _is_sensitive(key: str) -> bool:
 def redact(value: Any) -> Any:
     """Return a redacted deep copy of dicts/lists; scalars pass through."""
     if isinstance(value, dict):
-        return {
-            k: (REDACTED if _is_sensitive(str(k)) else redact(v))
-            for k, v in value.items()
-        }
+        return {k: (REDACTED if _is_sensitive(str(k)) else redact(v)) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
         return [redact(v) for v in value]
     return value

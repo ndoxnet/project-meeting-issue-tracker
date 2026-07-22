@@ -57,8 +57,15 @@ alembic upgrade head                                    # apply
 - Frontend: `eslint` + TypeScript compiler (`tsc --noEmit`).
 
 ## Tests
-- Backend: `pytest` (+ `pytest-asyncio`, `httpx` for API tests).
-- Phase 2 adds real coverage: auth, RBAC, issue lifecycle, overdue/stagnant, CSV.
+- Backend: `pytest -q` (+ `pytest-asyncio`, `httpx`, in-memory `aiosqlite`).
+  134 tests cover auth, RBAC, issue lifecycle, follow-up/void, attachments,
+  dashboard (overdue/stagnant/due-this-week), and CSV. Single-process only
+  (no `pytest-xdist`); Argon2 makes the suite ~3 min.
+- **PostgreSQL integration tests** are skipped by default and only run against a
+  throwaway database:
+  `INTEGRATION_DATABASE_URL=postgresql+asyncpg://… pytest -m postgresql`.
+  They are where concurrency, `FOR UPDATE` row locking, JSONB/INET, and full
+  migration behavior are proven — do NOT point them at production.
 
 ## Commit rules
 - Conventional-style messages: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`,

@@ -70,6 +70,7 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 markers = [
     "integration: tests requiring a real PostgreSQL instance (not run on the VPS)",
+    "postgresql: PostgreSQL-specific integration tests (skipped without INTEGRATION_DATABASE_URL)",
 ]
 
 # Pin rationale:

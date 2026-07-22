@@ -49,6 +49,4 @@ class MeetingOccurrence(UUIDPKMixin, TimestampMixin, Base):
     agenda: Mapped[str | None] = mapped_column(Text, nullable=True)
     minutes_link: Mapped[str | None] = mapped_column(Text, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_by: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id"), nullable=False
-    )
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)

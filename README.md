@@ -1,10 +1,10 @@
 # Project Meeting Issue Tracker
 
 > Concept by MrHan (08974747477)
-> **Status: Phase 2A — database, auth, RBAC, users & master data.**
-> Backend foundation implemented and tested (68 tests, ruff+mypy clean). No
-> production stack is running; the frontend is not integrated; issue business
-> logic is Phase 2B.
+> **Status: Phase 2B — issue lifecycle, follow-up history, attachments,
+> dashboard & CSV export.** Backend feature-complete for the MVP and tested
+> (134 tests, ruff+mypy clean; 3 PostgreSQL integration tests pending). No
+> production stack is running; the frontend is not integrated (Phase 2C).
 
 Internal web app for the Project Control team to record, monitor, and control
 issues and follow-ups discussed across many project meetings.
@@ -72,16 +72,19 @@ push the image; the VPS only pulls it (see
 `make help` lists tasks. `compose-build` / `compose-up` are intentionally guarded
 against running on the VPS in Phase 1.
 
-## Known limitations (Phase 2A)
-- Access tokens are not revocable server-side; logout = client discards token;
-  no refresh token yet (see ADR-009 / SECURITY.md).
-- Migration validated on SQLite (upgrade/downgrade + `alembic check`); NOT run on
+## Known limitations (Phase 2B)
+- Issue-code concurrency (row locking `FOR UPDATE`) is proven only by the
+  PostgreSQL integration tests, which are **pending** (`pytest -m postgresql`);
+  SQLite validates logic, not concurrency.
+- Migrations validated on SQLite (upgrade/downgrade + `alembic check`); NOT run on
   PostgreSQL / the VPS.
-- Issue CRUD/lifecycle, attachments, dashboard, reports/CSV → Phase 2B.
-- Frontend not integrated (Phase 3). No UI beyond the Phase 1 shell.
+- Access tokens are not revocable server-side; logout = client discards token
+  (ADR-009).
+- Attachment type check is signature/magic-byte based (no deep parsing / AV).
+- Frontend not integrated (Phase 2C). Notifications/email/WhatsApp out of scope.
 - No dependency lockfiles committed (installs happen off-VPS).
 
 ## Next phase
-Phase 2B — issue-code generation, issue CRUD, lifecycle transitions, append-only
-updates, close/reopen, archive, attachment metadata, dashboard aggregates, CSV
-export, and tests.
+Phase 2C — frontend implementation (login, shell, dashboard, issue register,
+issue form, detail timeline, meetings, master data, users, audit) against the
+Phase 2A/2B API.

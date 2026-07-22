@@ -6,6 +6,7 @@ explicit algorithm allow-list — the algorithm is never read from the token.
 Invalid tokens raise a single generic error type; details are not leaked to
 clients. Token values are never logged.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -31,9 +32,7 @@ class TokenData:
     token_type: str
 
 
-def create_access_token(
-    *, user_id: str | uuid.UUID, role: str | None = None
-) -> tuple[str, int]:
+def create_access_token(*, user_id: str | uuid.UUID, role: str | None = None) -> tuple[str, int]:
     """Create a signed access token. Returns (token, expires_in_seconds)."""
     settings = get_settings()
     now = datetime.now(UTC)

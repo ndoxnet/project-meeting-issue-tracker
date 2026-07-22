@@ -6,6 +6,7 @@ All errors are serialized as:
 Tracebacks are never sent to the client. In development the traceback is logged
 (with secrets redacted) but not returned.
 """
+
 from __future__ import annotations
 
 from fastapi import FastAPI, Request, status
@@ -57,6 +58,31 @@ class DomainValidationError(AppError):
     message = "Validation failed"
 
 
+class UnsupportedMediaTypeError(AppError):
+    code = "ATTACHMENT_TYPE_NOT_ALLOWED"
+    http_status = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+    message = "Attachment type is not allowed"
+
+
+class PayloadTooLargeError(AppError):
+    code = "ATTACHMENT_TOO_LARGE"
+    http_status = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+    message = "Attachment exceeds the maximum allowed size"
+
+
+class DomainError(AppError):
+    """Domain error with a caller-supplied stable code + HTTP status.
+
+    Used for the Phase 2B business codes (invalid transition, already closed,
+    inactive category, etc.) without a bespoke class per code.
+    """
+
+    def __init__(self, code: str, message: str, *, http_status: int = 409) -> None:
+        super().__init__(message)
+        self.code = code
+        self.http_status = http_status
+
+
 def _request_id(request: Request) -> str | None:
     return getattr(request.state, "request_id", None)
 
@@ -96,6 +122,8 @@ def register_exception_handlers(app: FastAPI) -> None:
             403: "AUTHORIZATION_FAILED",
             404: "NOT_FOUND",
             409: "CONFLICT",
+            413: "ATTACHMENT_TOO_LARGE",
+            415: "ATTACHMENT_TYPE_NOT_ALLOWED",
         }.get(exc.status_code, "HTTP_ERROR")
         message = exc.detail if isinstance(exc.detail, str) else "Request failed"
         return _error_response(

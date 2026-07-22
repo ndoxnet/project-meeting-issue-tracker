@@ -4,6 +4,7 @@
 Strictly validated. No secret has a production-usable default. Values are read
 from the environment (see .env.example). Secret values are never logged.
 """
+
 from __future__ import annotations
 
 from functools import lru_cache

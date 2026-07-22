@@ -20,13 +20,9 @@ from app.db.base import Base, UUIDPKMixin
 
 class Attachment(UUIDPKMixin, Base):
     __tablename__ = "attachments"
-    __table_args__ = (
-        CheckConstraint("size_bytes >= 0", name="size_non_negative"),
-    )
+    __table_args__ = (CheckConstraint("size_bytes >= 0", name="size_non_negative"),)
 
-    issue_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("issues.id"), nullable=False, index=True
-    )
+    issue_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("issues.id"), nullable=False, index=True)
     issue_update_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("issue_updates.id"), nullable=True
     )
@@ -43,9 +39,5 @@ class Attachment(UUIDPKMixin, Base):
     uploaded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
-    removed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    removed_by: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("users.id"), nullable=True
-    )
+    removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    removed_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)

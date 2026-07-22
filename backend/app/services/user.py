@@ -4,6 +4,7 @@
 Enforces uniqueness, password policy, and the last-active-admin safety rule.
 Every mutation writes an audit row and commits atomically with the change.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -41,9 +42,7 @@ async def create_user(
     if await user_repo.get_by_email(session, data.email):
         raise ConflictError("Email already exists")
     try:
-        validate_password_policy(
-            data.password, username=data.username, email=data.email
-        )
+        validate_password_policy(data.password, username=data.username, email=data.email)
     except PasswordPolicyError as exc:
         raise DomainValidationError(str(exc)) from exc
 
@@ -96,9 +95,7 @@ async def update_user(
         # Guard: don't demote the only remaining active admin.
         if user.role == UserRole.ADMIN.value and data.role != UserRole.ADMIN:
             if await user_repo.count_active_admins(session) <= 1 and user.is_active:
-                raise DomainValidationError(
-                    "Cannot change role of the only active admin"
-                )
+                raise DomainValidationError("Cannot change role of the only active admin")
         user.role = data.role.value
 
     record_audit(
@@ -132,9 +129,7 @@ async def set_active(
         # Cannot deactivate the only active admin (whoever performs it).
         if user.role == UserRole.ADMIN.value and user.is_active:
             if await user_repo.count_active_admins(session) <= 1:
-                raise DomainValidationError(
-                    "Cannot deactivate the only active admin"
-                )
+                raise DomainValidationError("Cannot deactivate the only active admin")
 
     before = _public(user)
     user.is_active = active
@@ -165,9 +160,7 @@ async def reset_password(
     if user is None:
         raise NotFoundError("User not found")
     try:
-        validate_password_policy(
-            new_password, username=user.username, email=user.email
-        )
+        validate_password_policy(new_password, username=user.username, email=user.email)
     except PasswordPolicyError as exc:
         raise DomainValidationError(str(exc)) from exc
 

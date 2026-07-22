@@ -81,8 +81,10 @@ async def test_login_success_audited(client, admin_user, sessionmaker) -> None:
     await client.post(LOGIN, json={"username": "admin", "password": "ValidPassw0rd!!"})
     async with sessionmaker() as s:
         rows = (
-            await s.execute(select(AuditLog).where(AuditLog.action == "auth.login_success"))
-        ).scalars().all()
+            (await s.execute(select(AuditLog).where(AuditLog.action == "auth.login_success")))
+            .scalars()
+            .all()
+        )
     assert len(rows) == 1
     assert rows[0].actor_user_id == admin_user.id
 
@@ -91,8 +93,10 @@ async def test_login_failure_audited_without_password(client, admin_user, sessio
     await client.post(LOGIN, json={"username": "admin", "password": "WrongPassword12"})
     async with sessionmaker() as s:
         rows = (
-            await s.execute(select(AuditLog).where(AuditLog.action == "auth.login_failed"))
-        ).scalars().all()
+            (await s.execute(select(AuditLog).where(AuditLog.action == "auth.login_failed")))
+            .scalars()
+            .all()
+        )
     assert len(rows) == 1
     # Actor is null on failed login; payload must not contain the password.
     assert rows[0].actor_user_id is None

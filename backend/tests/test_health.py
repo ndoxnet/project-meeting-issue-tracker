@@ -5,6 +5,7 @@ Phase 1: this documents the intended test shape. It requires the dependencies
 from pyproject.toml (fastapi, httpx). Do NOT run it on the VPS in Phase 1 — run
 it on a developer machine where dependencies are installed.
 """
+
 from __future__ import annotations
 
 import pytest

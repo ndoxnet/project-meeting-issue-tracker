@@ -6,9 +6,11 @@ passes and the app uses an in-memory async SQLite database. Each test gets a
 fresh schema (StaticPool keeps a single connection so the in-memory DB persists
 within a test).
 """
+
 from __future__ import annotations
 
 import os
+import tempfile
 
 # --- must run before importing app modules ---
 os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-long-enough-1234567890")
@@ -17,6 +19,9 @@ os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite://")
 os.environ.setdefault("ADMIN_EMAIL", "admin@example.com")
 os.environ.setdefault("ADMIN_USERNAME", "admin")
 os.environ.setdefault("ADMIN_INITIAL_PASSWORD", "AdminPassw0rd!!")
+# Attachment tests: writable temp storage + a small size cap so limit tests are cheap.
+os.environ.setdefault("STORAGE_PATH", tempfile.mkdtemp(prefix="ittest-storage-"))
+os.environ.setdefault("ATTACHMENT_MAX_MB", "1")
 
 import uuid  # noqa: E402
 from collections.abc import AsyncIterator  # noqa: E402
@@ -37,7 +42,10 @@ from app.core.tokens import create_access_token  # noqa: E402
 from app.db.base import Base  # noqa: E402
 from app.db.session import get_db  # noqa: E402
 from app.main import app  # noqa: E402
+from app.models.category import Category  # noqa: E402
 from app.models.enums import UserRole  # noqa: E402
+from app.models.meeting import Meeting, MeetingOccurrence  # noqa: E402
+from app.models.responsible_party import ResponsibleParty  # noqa: E402
 from app.models.user import User  # noqa: E402
 
 get_settings.cache_clear()
@@ -134,3 +142,66 @@ async def viewer_user(sessionmaker) -> User:
 @pytest.fixture
 def unknown_uuid() -> uuid.UUID:
     return uuid.uuid4()
+
+
+# ---- master-data fixtures for issue tests ----
+@pytest_asyncio.fixture
+async def category(sessionmaker) -> Category:
+    async with sessionmaker() as s:
+        c = Category(name="Engineering", is_active=True)
+        s.add(c)
+        await s.commit()
+        await s.refresh(c)
+        return c
+
+
+@pytest_asyncio.fixture
+async def inactive_category(sessionmaker) -> Category:
+    async with sessionmaker() as s:
+        c = Category(name="Legacy", is_active=False)
+        s.add(c)
+        await s.commit()
+        await s.refresh(c)
+        return c
+
+
+@pytest_asyncio.fixture
+async def responsible_party(sessionmaker) -> ResponsibleParty:
+    async with sessionmaker() as s:
+        r = ResponsibleParty(name="Main Contractor", is_active=True)
+        s.add(r)
+        await s.commit()
+        await s.refresh(r)
+        return r
+
+
+@pytest_asyncio.fixture
+async def occurrence(sessionmaker, admin_user) -> MeetingOccurrence:
+    from datetime import date
+
+    async with sessionmaker() as s:
+        m = Meeting(name="Weekly Progress Meeting", is_active=True)
+        s.add(m)
+        await s.flush()
+        occ = MeetingOccurrence(
+            meeting_id=m.id,
+            meeting_date=date(2026, 7, 10),
+            meeting_number="#14",
+            created_by=admin_user.id,
+        )
+        s.add(occ)
+        await s.commit()
+        await s.refresh(occ)
+        return occ
+
+
+def issue_payload(category_id, **over) -> dict:
+    base = {
+        "title": "Manpower shortage at Area 5",
+        "description": "Contractor manpower below plan.",
+        "category_id": str(category_id),
+        "priority": "HIGH",
+        "raised_date": "2026-07-10",
+    }
+    base.update(over)
+    return base

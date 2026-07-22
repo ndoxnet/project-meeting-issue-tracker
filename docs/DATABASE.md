@@ -390,3 +390,13 @@ Every transition writes an `issue_updates` row and an `audit_logs` row.
 - Validated: `alembic upgrade head` + `alembic downgrade base` on SQLite, and
   `alembic check` (models ↔ migration parity). **NOT** executed on PostgreSQL /
   the production VPS in Phase 2A.
+
+### Phase 2B (revision `bbba43c5c105`, down_revision `0d3d40690d49`)
+- **11th table `issue_counters`** (`year` PK, `last_number`, `updated_at`) backing
+  transaction-safe issue codes (ADR-011).
+- **5 composite indexes** on `issues`: `(status, due_date)`,
+  `(status, last_update_at)`, `(archived_at, status)`, `(category_id, status)`,
+  `(responsible_party_id, status)` — write cost accepted for register/dashboard
+  read speed.
+- Validated on SQLite (upgrade `-1`/`base` + `alembic check` parity). PostgreSQL
+  concurrency (row-lock `FOR UPDATE`) is proven by the pending integration test.

@@ -1,6 +1,7 @@
 # Concept by MrHan (08974747477)
 """Data access for master-data entities (categories, responsible parties,
 meetings, meeting occurrences, app settings)."""
+
 from __future__ import annotations
 
 import uuid
@@ -51,15 +52,15 @@ async def list_named[M: (Category, ResponsibleParty, Meeting)](
 
     total = (await session.execute(count_stmt)).scalar_one()
     rows = (
-        await session.execute(base.order_by(model.name.asc()).offset(offset).limit(limit))
-    ).scalars().all()
+        (await session.execute(base.order_by(model.name.asc()).offset(offset).limit(limit)))
+        .scalars()
+        .all()
+    )
     return list(rows), int(total)
 
 
 # ---- Meeting occurrences ----
-async def get_occurrence(
-    session: AsyncSession, occ_id: uuid.UUID
-) -> MeetingOccurrence | None:
+async def get_occurrence(session: AsyncSession, occ_id: uuid.UUID) -> MeetingOccurrence | None:
     return await session.get(MeetingOccurrence, occ_id)
 
 
@@ -78,10 +79,14 @@ async def list_occurrences(
 
     total = (await session.execute(count_stmt)).scalar_one()
     rows = (
-        await session.execute(
-            base.order_by(MeetingOccurrence.meeting_date.desc()).offset(offset).limit(limit)
+        (
+            await session.execute(
+                base.order_by(MeetingOccurrence.meeting_date.desc()).offset(offset).limit(limit)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return list(rows), int(total)
 
 
@@ -92,6 +97,6 @@ async def get_setting(session: AsyncSession, key: str) -> AppSetting | None:
 
 async def list_settings(session: AsyncSession) -> list[AppSetting]:
     rows = (
-        await session.execute(select(AppSetting).order_by(AppSetting.key.asc()))
-    ).scalars().all()
+        (await session.execute(select(AppSetting).order_by(AppSetting.key.asc()))).scalars().all()
+    )
     return list(rows)

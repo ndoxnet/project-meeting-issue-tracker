@@ -1,6 +1,7 @@
 # Concept by MrHan (08974747477)
 """Factory for the three structurally-identical named master-data routers
 (categories, responsible parties, meetings). Read = any role; write = admin."""
+
 from __future__ import annotations
 
 import uuid

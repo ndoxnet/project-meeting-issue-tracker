@@ -5,6 +5,7 @@ The engine is created lazily from settings (not at import time) so importing the
 app never opens a connection. Provides a FastAPI dependency that yields a session,
 commits on success, rolls back on error, and always closes.
 """
+
 from __future__ import annotations
 
 from collections.abc import AsyncIterator

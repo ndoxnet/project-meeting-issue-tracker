@@ -79,3 +79,19 @@
   echoed on responses and stored in audit rows.
 - **Admin bootstrap:** `scripts/bootstrap_admin.py` reads env, is idempotent,
   refuses `CHANGE_ME`, never prints the password.
+
+## Phase 2B additions
+- **Attachments (ADR-014):** MIME allow-list + magic-byte signature check
+  (mismatch → 415 `ATTACHMENT_CONTENT_MISMATCH`); size cap (413); user filename
+  sanitized to a basename, stored under a random `uuid4.ext`; storage path
+  derived only from the issue UUID (no path traversal); SHA-256 recorded; file
+  deleted if the DB commit fails; download only via an authenticated endpoint
+  with `Content-Disposition: attachment` (never inline); soft remove only.
+  Limitation: signature sniff is not deep content validation / antivirus.
+- **CSV export:** formula-injection mitigation (cells starting with `= + - @` /
+  tab / CR are prefixed with `'`); 10,000-row cap (`EXPORT_LIMIT_EXCEEDED`);
+  never exports password/hash/token/audit JSON/storage paths; the export action
+  is audited with filters + row count only (not the CSV body).
+- **Sort safety:** issue-list sorting uses a fixed column allow-list; arbitrary
+  request-supplied column names are ignored (no SQL injection via `sort_by`).
+- **Void (ADR-013):** Admin-only; never rewinds current state silently.

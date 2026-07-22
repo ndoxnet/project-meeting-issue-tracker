@@ -4,6 +4,7 @@
 Never logs passwords or hashes. Uses a dummy hash to keep verification timing
 similar for unknown users (reduces username enumeration via timing).
 """
+
 from __future__ import annotations
 
 from pwdlib import PasswordHash
@@ -34,13 +35,9 @@ def validate_password_policy(
     lookup is NOT implemented in the MVP (documented in docs/SECURITY.md).
     """
     if len(password) < MIN_PASSWORD_LENGTH:
-        raise PasswordPolicyError(
-            f"Password must be at least {MIN_PASSWORD_LENGTH} characters."
-        )
+        raise PasswordPolicyError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
     if len(password) > MAX_PASSWORD_LENGTH:
-        raise PasswordPolicyError(
-            f"Password must be at most {MAX_PASSWORD_LENGTH} characters."
-        )
+        raise PasswordPolicyError(f"Password must be at most {MAX_PASSWORD_LENGTH} characters.")
     low = password.strip().lower()
     if username and low == username.strip().lower():
         raise PasswordPolicyError("Password must not equal the username.")
@@ -51,9 +48,7 @@ def validate_password_policy(
 def hash_password(password: str) -> str:
     """Hash a password with Argon2. Input length is bounded to prevent abuse."""
     if len(password) > MAX_PASSWORD_LENGTH:
-        raise PasswordPolicyError(
-            f"Password must be at most {MAX_PASSWORD_LENGTH} characters."
-        )
+        raise PasswordPolicyError(f"Password must be at most {MAX_PASSWORD_LENGTH} characters.")
     return _password_hash.hash(password)
 
 

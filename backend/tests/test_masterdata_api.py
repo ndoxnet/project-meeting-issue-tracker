@@ -29,7 +29,8 @@ async def test_update_category(client, admin_user) -> None:
     c = await client.post(CATS, json={"name": "HSE"}, headers=auth_header(admin_user))
     cid = c.json()["id"]
     resp = await client.patch(
-        f"{CATS}/{cid}", json={"description": "Health, Safety, Environment"},
+        f"{CATS}/{cid}",
+        json={"description": "Health, Safety, Environment"},
         headers=auth_header(admin_user),
     )
     assert resp.status_code == 200
@@ -87,7 +88,9 @@ async def test_category_change_is_audited(client, admin_user, sessionmaker) -> N
     await client.post(CATS, json={"name": "Procurement"}, headers=auth_header(admin_user))
     async with sessionmaker() as s:
         rows = (
-            await s.execute(select(AuditLog).where(AuditLog.action == "category.create"))
-        ).scalars().all()
+            (await s.execute(select(AuditLog).where(AuditLog.action == "category.create")))
+            .scalars()
+            .all()
+        )
     assert len(rows) == 1
     assert rows[0].actor_user_id == admin_user.id

@@ -7,6 +7,7 @@ portable (works on SQLite for tests), easy to evolve (no ALTER TYPE dance), and
 simple to validate. String length is bounded and a CHECK constraint enforces the
 allowed set at the database level.
 """
+
 from __future__ import annotations
 
 import enum

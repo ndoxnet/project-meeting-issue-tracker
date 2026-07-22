@@ -8,6 +8,7 @@ credentials are still CHANGE_ME placeholders. Never prints the password.
 Run manually (developer machine / deploy step) — NOT against production in 2A:
     python -m scripts.bootstrap_admin
 """
+
 from __future__ import annotations
 
 import asyncio

@@ -6,6 +6,7 @@ and default app settings.
 - Does NOT re-activate an inactive record (leaves explicit admin decisions alone).
 - Does NOT run automatically on import — call seed(session) or run as a script.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -84,9 +85,7 @@ async def seed(session: AsyncSession) -> dict[str, int]:
     """Idempotently seed all master data in one transaction. Returns counts."""
     counts = {
         "categories": await _seed_named(session, Category, CATEGORIES),
-        "responsible_parties": await _seed_named(
-            session, ResponsibleParty, RESPONSIBLE_PARTIES
-        ),
+        "responsible_parties": await _seed_named(session, ResponsibleParty, RESPONSIBLE_PARTIES),
         "meetings": await _seed_named(session, Meeting, MEETINGS),
         "settings": await _seed_settings(session),
     }
