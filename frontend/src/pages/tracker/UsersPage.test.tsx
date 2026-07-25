@@ -15,8 +15,8 @@ function renderUsers(role: UserRole = 'ADMIN') {
   return renderWithProviders(<UsersPage />, { role, initialEntries: ['/app/users'] });
 }
 
-function rowOf(name: string): HTMLElement {
-  const li = screen.getByText(name).closest('li');
+async function rowOf(name: string): Promise<HTMLElement> {
+  const li = (await screen.findByText(name)).closest('li');
   if (!li) throw new Error(`row not found for ${name}`);
   return li as HTMLElement;
 }
@@ -97,7 +97,7 @@ describe('UsersPage', () => {
     );
     const user = userEvent.setup();
     renderUsers();
-    await user.click(within(rowOf('EDITOR User')).getByRole('button', { name: 'Edit' }));
+    await user.click(within(await rowOf('EDITOR User')).getByRole('button', { name: 'Edit' }));
     const fullName = screen.getByLabelText(/full name/i);
     await user.clear(fullName);
     await user.type(fullName, 'Edited Editor');
@@ -117,7 +117,7 @@ describe('UsersPage', () => {
     );
     const user = userEvent.setup();
     renderUsers();
-    await user.click(within(rowOf('EDITOR User')).getByRole('button', { name: 'Edit' }));
+    await user.click(within(await rowOf('EDITOR User')).getByRole('button', { name: 'Edit' }));
     await user.selectOptions(screen.getByLabelText(/role/i), 'ADMIN');
     await user.click(screen.getByRole('button', { name: /save changes/i }));
 
@@ -128,7 +128,7 @@ describe('UsersPage', () => {
   it('prevents changing your own role in the UI', async () => {
     const user = userEvent.setup();
     renderUsers(); // current user is ADMIN → matches the admin row (self)
-    await user.click(within(rowOf('ADMIN User')).getByRole('button', { name: 'Edit' }));
+    await user.click(within(await rowOf('ADMIN User')).getByRole('button', { name: 'Edit' }));
     expect(screen.getByLabelText(/role/i)).toBeDisabled();
     expect(screen.getByText(/cannot change your own role/i)).toBeInTheDocument();
   });
@@ -136,8 +136,8 @@ describe('UsersPage', () => {
   it('disables deactivating your own account but allows others', async () => {
     renderUsers();
     await screen.findByText('ADMIN User');
-    expect(within(rowOf('ADMIN User')).getByRole('button', { name: 'Deactivate' })).toBeDisabled();
-    expect(within(rowOf('EDITOR User')).getByRole('button', { name: 'Deactivate' })).toBeEnabled();
+    expect(within(await rowOf('ADMIN User')).getByRole('button', { name: 'Deactivate' })).toBeDisabled();
+    expect(within(await rowOf('EDITOR User')).getByRole('button', { name: 'Deactivate' })).toBeEnabled();
   });
 
   it('surfaces the last-admin deactivation error inline in the confirm dialog', async () => {
@@ -151,7 +151,7 @@ describe('UsersPage', () => {
     );
     const user = userEvent.setup();
     renderUsers();
-    await user.click(within(rowOf('EDITOR User')).getByRole('button', { name: 'Deactivate' }));
+    await user.click(within(await rowOf('EDITOR User')).getByRole('button', { name: 'Deactivate' }));
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: 'Deactivate' }));
     expect(await within(dialog).findByText(/only active admin/i)).toBeInTheDocument();
@@ -167,7 +167,7 @@ describe('UsersPage', () => {
     );
     const user = userEvent.setup();
     renderUsers();
-    await user.click(within(rowOf('EDITOR User')).getByRole('button', { name: /reset password/i }));
+    await user.click(within(await rowOf('EDITOR User')).getByRole('button', { name: /reset password/i }));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText(/sessions remain valid until/i)).toBeInTheDocument();
     await user.type(within(dialog).getByLabelText(/new password/i), 'FreshPass12345');
