@@ -1,0 +1,91 @@
+# Concept by MrHan (08974747477)
+# One-time OFF-VPS bootstrap: install deps (creating the lockfile), generate real
+# OpenAPI types, run the full frontend validation, and upload ONLY the lockfile +
+# generated schema as artifacts. Read-only permissions; never deploys or commits.
+# Run manually from the Actions tab. See docs/FRONTEND_CI_BOOTSTRAP.md.
+name: Frontend Bootstrap Validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          # No npm cache here: the lockfile does not exist yet during bootstrap.
+
+      - name: Show environment
+        run: |
+          node --version
+          npm --version
+
+      - name: Install dependencies and create lockfile
+        run: npm install
+
+      - name: Generate OpenAPI TypeScript types
+        run: npm run generate:api
+
+      - name: Verify generated types are non-empty
+        run: |
+          test -s src/api/generated/schema.ts
+          git --no-pager diff -- src/api/generated/schema.ts || true
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test (first run)
+        run: npm run test
+
+      - name: Test (second run — flakiness check)
+        run: npm run test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Verify no production source maps
+        run: |
+          if find dist -name '*.map' -print -quit | grep -q .; then
+            echo "Unexpected source maps found"
+            exit 1
+          fi
+
+      - name: Scan bundle for forbidden secrets
+        run: |
+          if grep -RInE \
+            'SECRET_KEY|DATABASE_URL|POSTGRES_PASSWORD|BEGIN PRIVATE KEY|Bearer eyJ|AI_XAUUSD' \
+            dist; then
+            echo "Potential secret or forbidden value found"
+            exit 1
+          fi
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Upload bootstrap artifacts (lockfile + generated schema only)
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-bootstrap-artifacts
+          path: |
+            frontend/package-lock.json
+            frontend/src/api/generated/schema.ts
+          if-no-files-found: error
+          retention-days: 7

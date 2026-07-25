@@ -4,6 +4,10 @@
   "version": "0.3.0",
   "type": "module",
   "description": "Frontend SPA for the Project Meeting Issue Tracker (Concept by MrHan)",
+  "engines": {
+    "node": ">=20 <23",
+    "npm": ">=10"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

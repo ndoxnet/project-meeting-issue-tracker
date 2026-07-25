@@ -16,7 +16,8 @@
    check:api` drift guard), `npm run lint`, `npm run typecheck`, `npm run test`,
    then `docker build -t <registry>/issue-tracker-frontend:<tag> ./frontend`.
    The Dockerfile uses `npm ci` (committed `package-lock.json`) and produces no
-   production sourcemaps.
+   production sourcemaps. Off-VPS validation runs on GitHub Actions before any
+   image build — see `docs/FRONTEND_CI_BOOTSTRAP.md`.
 2. Optionally build the backend image off-VPS too (smaller/safer), or build it on
    the VPS only if resources allow at a quiet time.
 3. **Push** images to a registry the VPS can pull from.

@@ -3,6 +3,22 @@
 > Concept by MrHan (08974747477)
 All notable changes to this project are documented here.
 
+## [unreleased] — Phase 2C.1.5A — Off-VPS Frontend Validation via GitHub Actions
+### Added (CI config + docs only — no npm run on the VPS)
+- `.github/workflows/frontend-bootstrap-validation.yml` — manual, read-only,
+  Node 22, ubuntu-24.04: `npm install` → `generate:api` → lint → typecheck →
+  test ×2 → build → source-map check → secret scan → `npm audit`; uploads ONLY
+  `package-lock.json` + generated `schema.ts` as artifacts (7-day retention).
+- `.github/workflows/frontend-validation.yml.template` — permanent `npm ci` +
+  `check:api` workflow, inert until renamed to `.yml` (after the lockfile exists).
+- `docs/FRONTEND_CI_BOOTSTRAP.md` — operator procedure (artifact route + dev-machine
+  alternative); `.nvmrc` (22) + `engines` in `package.json`.
+### Status
+- Production VPS validation correctly remained blocked (NO-GO on VPS). Frontend
+  runtime is **still unvalidated** until the bootstrap workflow is green and the
+  lockfile + real generated types are committed. **Phase 2C.2 remains blocked**
+  until the permanent CI passes. No backend/DB/service change.
+
 ## [0.3.0-frontend] — Phase 2C.1 — Frontend Auth, API Client, Guards, Shell
 ### Added (frontend scaffold — runtime validation pending off-VPS)
 - **API layer:** native-`fetch` typed client (bearer, JSON/blob/text/void/multipart,

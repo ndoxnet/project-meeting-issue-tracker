@@ -10,17 +10,23 @@
 **never on the production VPS** (OOM risk; ADR-004). The lockfile and the generated
 API types are produced off-VPS.
 
+> **Runtime validation status:** NOT yet validated. The scaffold has not been
+> installed/built/tested at runtime. Use the GitHub Actions bootstrap route
+> (`docs/FRONTEND_CI_BOOTSTRAP.md`) or a developer workstation, then commit
+> `package-lock.json` + the real `src/api/generated/schema.ts`. **Phase 2C.2 is
+> blocked until the permanent CI (`npm ci` + `check:api` + lint + typecheck + test
+> + build) is green.**
+
 ## Getting started (off-VPS)
 ```bash
 cd frontend
 npm install            # creates package-lock.json (commit it)
 npm run generate:api   # generate src/api/generated/schema.ts from the OpenAPI spec
-npm run lint
-npm run typecheck
-npm run test
-npm run build
+npm run check:api      # drift guard
+npm run lint && npm run typecheck && npm run test && npm run build
 ```
 Dev server: `npm run dev` (proxies `/api` to `http://127.0.0.1:8000`).
+CI route (no dev machine needed): see `docs/FRONTEND_CI_BOOTSTRAP.md`.
 
 ## Scripts
 - `generate:api` — regenerate types from `../docs/api/openapi.json`.

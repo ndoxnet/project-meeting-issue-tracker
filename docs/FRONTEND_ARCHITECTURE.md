@@ -55,7 +55,10 @@ one config (`components/navigation/navigation.ts`).
 - **Session state** → AuthProvider context.
 - No Redux/MobX/Zustand.
 
-## Phase 2C.2 handoff
+## Validation status & Phase 2C.2 handoff
 Placeholders exist for Dashboard, Issues, Meetings, Reports, Users, Audit, Settings.
-2C.2 implements the Dashboard and Issue register/detail against the typed client and
-the query keys already documented.
+The scaffold is **not yet runtime-validated**: install/typecheck/test/build run
+off-VPS via GitHub Actions (`docs/FRONTEND_CI_BOOTSTRAP.md`). **Phase 2C.2 is
+blocked until** the real `package-lock.json` and generated `schema.ts` are committed
+and the permanent CI is green. Then 2C.2 implements the Dashboard and Issue
+register/detail against the typed client and the documented query keys.

@@ -1,0 +1,86 @@
+# Concept by MrHan (08974747477)
+# PERMANENT frontend validation — NOT YET ACTIVE.
+#
+# This is a `.template` file on purpose: GitHub Actions only runs workflows named
+# `*.yml` / `*.yaml`, so this does not trigger while the lockfile is missing.
+# ACTIVATE it only AFTER `frontend/package-lock.json` and the real generated
+# `frontend/src/api/generated/schema.ts` are committed:
+#   git mv .github/workflows/frontend-validation.yml.template \
+#          .github/workflows/frontend-validation.yml
+# It uses `npm ci` (requires the committed lockfile) and `check:api` (requires the
+# real generated schema). See docs/FRONTEND_CI_BOOTSTRAP.md.
+name: Frontend Validation
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "docs/api/openapi.json"
+      - ".github/workflows/frontend-validation.yml"
+  push:
+    branches:
+      - master
+    paths:
+      - "frontend/**"
+      - "docs/api/openapi.json"
+      - ".github/workflows/frontend-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Check OpenAPI generated types (drift guard)
+        run: npm run check:api
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Verify bundle safety
+        run: |
+          if find dist -name '*.map' -print -quit | grep -q .; then
+            echo "Unexpected production source maps found"
+            exit 1
+          fi
+          if grep -RInE \
+            'SECRET_KEY|DATABASE_URL|POSTGRES_PASSWORD|BEGIN PRIVATE KEY|Bearer eyJ|AI_XAUUSD' \
+            dist; then
+            echo "Potential secret or forbidden value found"
+            exit 1
+          fi
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high

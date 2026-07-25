@@ -51,6 +51,15 @@ npm run build               # tsc -b && vite build — NEVER on the production V
 Architecture: `docs/FRONTEND_ARCHITECTURE.md`. Security: `docs/FRONTEND_SECURITY.md`.
 Auth is memory-only (ADR-017); a browser refresh requires re-login.
 
+### Off-VPS validation via GitHub Actions
+Since the production VPS forbids npm (ADR-004), frontend validation runs on a
+GitHub-hosted runner. First-time bootstrap produces the lockfile + generated types;
+after they are committed, the permanent workflow validates every PR/push with
+`npm ci`. Full operator procedure: `docs/FRONTEND_CI_BOOTSTRAP.md`. Workflows:
+`.github/workflows/frontend-bootstrap-validation.yml` (manual) and
+`.github/workflows/frontend-validation.yml.template` (activate after the lockfile
+is committed).
+
 ## Migrations (Alembic)
 ```bash
 cd backend
