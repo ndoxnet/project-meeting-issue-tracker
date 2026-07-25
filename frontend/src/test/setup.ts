@@ -4,6 +4,11 @@ import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 import { server } from './server';
 import { clearAccessToken } from '@/auth/tokenStore';
 
+// jsdom does not implement Blob object-URL APIs used by file downloads. Provide
+// deterministic stubs so download flows can run (tests spy on these as needed).
+URL.createObjectURL = () => 'blob:mock';
+URL.revokeObjectURL = () => {};
+
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 
 beforeEach(() => {

@@ -4,6 +4,7 @@
 // the token, never puts it in the URL, and never persists it.
 import { env } from '@/config/env';
 import { getAccessToken } from '@/auth/tokenStore';
+import { filenameFromContentDisposition } from '@/lib/download';
 import { apiErrorFromResponse } from './errors';
 
 type Unauthorized = () => void;
@@ -73,8 +74,40 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
+/**
+ * Authenticated binary download. Returns the blob plus the filename parsed from
+ * the Content-Disposition header (null if absent — the caller applies a
+ * deterministic fallback). The blob/object URL is the caller's to consume and
+ * revoke; it is NEVER placed in the query cache.
+ */
+async function download(
+  path: string,
+  options: { query?: RequestOptions['query']; signal?: AbortSignal } = {},
+): Promise<{ blob: Blob; filename: string | null }> {
+  const headers: Record<string, string> = { Accept: 'application/octet-stream' };
+  const token = getAccessToken();
+  if (token) headers.Authorization = `Bearer ${token}`; // never logged, never in URL
+
+  const response = await fetch(buildUrl(path, options.query), {
+    method: 'GET',
+    headers,
+    signal: options.signal,
+  });
+
+  if (response.status === 401) {
+    onUnauthorized?.();
+    throw await apiErrorFromResponse(response);
+  }
+  if (!response.ok) throw await apiErrorFromResponse(response);
+
+  const blob = await response.blob();
+  const filename = filenameFromContentDisposition(response.headers.get('Content-Disposition'));
+  return { blob, filename };
+}
+
 export const apiClient = {
   request,
+  download,
   get: <T>(path: string, options?: Omit<RequestOptions, 'method' | 'json' | 'formData'>) =>
     request<T>(path, { ...options, method: 'GET' }),
   post: <T>(path: string, options?: Omit<RequestOptions, 'method'>) =>

@@ -5,6 +5,7 @@ import { RouterProvider } from 'react-router-dom';
 import { createQueryClient } from '@/api/queryClient';
 import { AuthProvider } from '@/auth/AuthProvider';
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary';
+import { ToastProvider } from '@/components/feedback/ToastProvider';
 import { router } from './router';
 
 /**
@@ -18,7 +19,9 @@ export function AppProviders() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <RouterProvider router={router} />
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>

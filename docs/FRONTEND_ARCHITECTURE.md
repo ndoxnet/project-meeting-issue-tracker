@@ -76,6 +76,27 @@ Install/typecheck/lint/test/build run **off-VPS via GitHub Actions**
 (`frontend-validation.yml`) — never on the production VPS (ADR-004). The permanent
 `npm ci` workflow is the acceptance gate for this phase.
 
+## Attachments, export & monitoring (Phase 2C.3)
+- **Attachments** (`features/attachments/`) on the issue detail page: list (all
+  roles) / upload (Editor/Admin, non-archived) / download (all roles) / remove
+  (Admin). Client-side size+type is a usability pre-check mirroring the backend
+  config (`config.ts`); the backend re-validates and is authoritative. Rejection
+  codes 413/415 (`ATTACHMENT_TOO_LARGE`, `ATTACHMENT_TYPE_NOT_ALLOWED`,
+  `ATTACHMENT_CONTENT_MISMATCH`) are handled distinctly.
+- **Downloads** are authenticated blob responses via `apiClient.download`;
+  `lib/download.ts` parses+sanitizes the `Content-Disposition` filename (with a
+  deterministic fallback) and always revokes the object URL. Blobs/object URLs
+  are never cached (download is a mutation, not a query).
+- **CSV export** (`features/reports/`, `api/reports.ts`) reuses the register's
+  active filters exactly; no pagination/sort is sent (none is contract-exposed).
+- **Monitoring** (`pages/tracker/MonitoringPage`) uses the dedicated
+  `dashboard_{overdue,stagnant,due_this_week}` endpoints — the logic stays
+  server-side. **Analytics** (`features/dashboard/`) render distributions/trend
+  with dependency-free CSS bars + an accessible table; values are always text.
+- **Toasts** (`components/feedback/ToastProvider`) are accessible live regions
+  that supplement — never replace — inline errors.
+
 ## Not implemented (deferred)
-Reports/Users/Audit/Settings remain placeholders; attachments UI, CSV export UI,
-void-update UI, and admin/master-data management are out of Phase 2C.2 scope.
+Users/Audit/Settings remain placeholders; **Audit** is contract-blocked (no
+`GET /audit-logs` in the frozen v1 API — a future read-only audit contract is
+tracked separately). Void-update UI and admin/master-data management are Phase 2C.4.

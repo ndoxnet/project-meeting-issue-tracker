@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { PriorityBadge } from '@/components/ui/PriorityBadge';
 import { Timeline } from '@/features/issues/Timeline';
 import { IssueActions } from '@/features/issues/IssueActions';
+import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { canEditMetadata } from '@/features/issues/lifecycle';
 import { useAuth } from '@/auth/useAuth';
 import { useIssue, useIssueUpdates } from '@/api/issues';
@@ -108,6 +109,8 @@ export function IssueDetailPage() {
             >
               {updates.data && <Timeline updates={updates.data} />}
             </DataState>
+
+            <AttachmentsPanel issueId={issue.data.id} archived={issue.data.archived_at != null} />
           </>
         )}
       </DataState>

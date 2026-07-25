@@ -3,7 +3,46 @@
 > Concept by MrHan (08974747477)
 All notable changes to this project are documented here.
 
-## [unreleased] — Phase 2C.2 — Authenticated Meeting Issue Tracker Core UI
+## [unreleased] — Phase 2C.3 — Attachments, CSV Export, and Monitoring Views
+### Added (frontend; validated via GitHub Actions, not on the VPS)
+- **Issue attachments** (`features/attachments/`): list (all roles), upload
+  (Editor/Admin, non-archived), download, and remove (Admin, confirm dialog),
+  wired into the issue detail page. Uploads run a usability pre-check for size
+  (10 MB, mirrors `ATTACHMENT_MAX_MB`) and type (PDF/JPEG/PNG); the backend stays
+  authoritative. The three rejection codes — `ATTACHMENT_TOO_LARGE` (413),
+  `ATTACHMENT_TYPE_NOT_ALLOWED` (415), `ATTACHMENT_CONTENT_MISMATCH` (415) — are
+  surfaced distinctly.
+- **CSV export** (`features/reports/ExportCsvButton`, `api/reports.ts`): exports
+  the register reusing the active server-side filters exactly; no pagination/sort
+  is sent (the contract exposes none). `EXPORT_LIMIT_EXCEEDED` is surfaced clearly.
+  Available on the Issue Register and a new **Reports** page (replaces the placeholder).
+- **Monitoring views** (`pages/tracker/MonitoringPage`): dedicated Overdue /
+  Stagnant / Due-this-week lists backed by the `dashboard_{overdue,stagnant,
+  due_this_week}` endpoints (server-side logic; never recomputed in the browser),
+  reachable from the dashboard KPI cards.
+- **Dashboard analytics** (`features/dashboard/`): by-category and
+  by-responsible-party distributions (CSS bars) and an opened-vs-closed trend
+  (accessible `<table>`, period 6/12/24 months) — **no chart library**; every
+  value is readable as text, never bar length or color alone.
+- **Downloads** (`lib/download.ts`, `apiClient.download`): authenticated blob
+  responses, `Content-Disposition` filename parsing + sanitization with a
+  deterministic fallback, and object URLs always revoked. Blobs/object URLs are
+  never stored in the query cache.
+- **Toasts** (`components/feedback/ToastProvider`): accessible live regions
+  (status/alert), auto-dismiss, de-duplicated; supplement — never replace —
+  inline form/mutation errors.
+- **Tests:** attachments (list/empty/upload-validation/upload/role-gating/
+  download-revoke/remove), CSV export (filters forwarded, limit-exceeded),
+  monitoring (list/empty/invalid-redirect), analytics (labels+values), toasts.
+### Notes
+- **Audit** screen remains a documented placeholder: the frozen v1 contract
+  exposes no `GET /audit-logs` endpoint. A future read-only audit contract is
+  tracked separately; no backend endpoint was added in this frontend phase.
+- Users/Settings/master-data admin remain deferred (Phase 2C.4). No backend/DB
+  change. No npm run on the VPS.
+
+## [unreleased] — Phase 2C.2 — Authenticated Meeting Issue Tracker Core UI (PASS)
+> Frontend Validation green on commit `0c08136`; recorded as PASS.
 ### Added (frontend; validated via GitHub Actions, not on the VPS)
 - **Typed API layer** derived from the generated OpenAPI schema: `api/types.ts`
   (component aliases), `api/{issues,meetings,dashboard,masterdata}.ts` (fetchers +

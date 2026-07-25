@@ -13,7 +13,8 @@ import { IssuesListPage } from '@/pages/tracker/IssuesListPage';
 import { IssueDetailPage } from '@/pages/tracker/IssueDetailPage';
 import { IssueCreatePage } from '@/pages/tracker/IssueCreatePage';
 import { IssueEditPage } from '@/pages/tracker/IssueEditPage';
-import { ReportsPlaceholderPage } from '@/pages/ReportsPlaceholderPage';
+import { MonitoringPage } from '@/pages/tracker/MonitoringPage';
+import { ReportsPage } from '@/pages/tracker/ReportsPage';
 import { UsersPlaceholderPage } from '@/pages/UsersPlaceholderPage';
 import { AuditPlaceholderPage } from '@/pages/AuditPlaceholderPage';
 import { SettingsPlaceholderPage } from '@/pages/SettingsPlaceholderPage';
@@ -37,7 +38,8 @@ export const router = createBrowserRouter([
           { path: 'issues/new', element: <IssueCreatePage /> },
           { path: 'issues/:issueId', element: <IssueDetailPage /> },
           { path: 'issues/:issueId/edit', element: <IssueEditPage /> },
-          { path: 'reports', element: <ReportsPlaceholderPage /> },
+          { path: 'monitoring/:view', element: <MonitoringPage /> },
+          { path: 'reports', element: <ReportsPage /> },
           {
             element: <RoleRoute allowedRoles={['ADMIN']} />,
             children: [

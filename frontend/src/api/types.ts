@@ -45,6 +45,9 @@ export type IssueReopenRequest = S['IssueReopenRequest'];
 export type IssueUpdateCreate = S['IssueUpdateCreate'];
 export type IssueUpdateResponse = S['IssueUpdateResponse'];
 
+// ---- attachments ----
+export type AttachmentResponse = S['AttachmentResponse'];
+
 // ---- dashboard ----
 export type DashboardSummary = S['DashboardSummary'];
 export type CountByLabel = S['CountByLabel'];

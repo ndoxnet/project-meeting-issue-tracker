@@ -2,12 +2,15 @@
 // MSW handlers + fixtures for meetings/issues/dashboard/master-data (frozen v1).
 import { http, HttpResponse } from 'msw';
 import type {
+  AttachmentResponse,
+  CountByLabel,
   DashboardSummary,
   IssueCreateResponse,
   IssueDetailResponse,
   IssueListItem,
   IssueUpdateResponse,
   MeetingOccurrence,
+  MonthlyTrendPoint,
   NamedResponse,
   Page,
 } from '@/api/types';
@@ -129,9 +132,37 @@ export function makeIssueUpdate(over: Partial<IssueUpdateResponse> = {}): IssueU
   };
 }
 
+export function makeAttachment(over: Partial<AttachmentResponse> = {}): AttachmentResponse {
+  return {
+    id: 'att-1',
+    issue_id: 'iss-1',
+    issue_update_id: null,
+    original_filename: 'evidence-report.pdf',
+    stored_filename: 'stored-abc123.pdf',
+    mime_type: 'application/pdf',
+    size_bytes: 20480,
+    checksum_sha256: 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
+    description: 'Vendor confirmation letter',
+    uploaded_by: 'user-1',
+    uploaded_at: '2026-07-13T02:00:00Z',
+    removed_at: null,
+    ...over,
+  } as AttachmentResponse;
+}
+
 function page<T>(items: T[]): Page<T> {
   return { items, meta: { page: 1, page_size: 20, total: items.length, pages: 1 } };
 }
+
+const byCategory: CountByLabel[] = [
+  { label: 'Engineering', count: 3 },
+  { label: 'Procurement', count: 1 },
+];
+const byResponsibleParty: CountByLabel[] = [{ label: 'Main Contractor', count: 2 }];
+const trend: MonthlyTrendPoint[] = [
+  { month: '2026-06', opened: 4, closed: 2 },
+  { month: '2026-07', opened: 5, closed: 3 },
+];
 
 const summary: DashboardSummary = {
   open_count: 3,
@@ -185,4 +216,43 @@ export const trackerHandlers = [
     HttpResponse.json(makeIssueDetail({ id: String(params.id), status: 'REOPENED' })),
   ),
   http.post(`${BASE}/issues/:id/updates`, () => HttpResponse.json(makeIssueUpdate(), { status: 201 })),
+
+  // ---- attachments ----
+  http.get(`${BASE}/issues/:id/attachments`, () => HttpResponse.json([makeAttachment()])),
+  http.post(`${BASE}/issues/:id/attachments`, () =>
+    HttpResponse.json(makeAttachment({ id: 'att-new' }), { status: 201 }),
+  ),
+  http.get(`${BASE}/issues/:id/attachments/:aid/download`, () =>
+    new HttpResponse(new Blob(['%PDF-1.4 fake'], { type: 'application/pdf' }), {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="evidence-report.pdf"',
+      },
+    }),
+  ),
+  http.post(`${BASE}/issues/:id/attachments/:aid/remove`, () =>
+    HttpResponse.json({ message: 'Attachment removed.' }),
+  ),
+
+  // ---- reports ----
+  http.get(`${BASE}/reports/issues.csv`, () =>
+    new HttpResponse('issue_code,title\nISS-2026-0001,Vendor commissioning attendance\n', {
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': 'attachment; filename="issues-2026.csv"',
+      },
+    }),
+  ),
+
+  // ---- monitoring lists ----
+  http.get(`${BASE}/dashboard/overdue`, () =>
+    HttpResponse.json([makeIssueListItem({ is_overdue: true })]),
+  ),
+  http.get(`${BASE}/dashboard/stagnant`, () => HttpResponse.json([makeIssueListItem()])),
+  http.get(`${BASE}/dashboard/due-this-week`, () => HttpResponse.json([makeIssueListItem()])),
+
+  // ---- distributions & trend ----
+  http.get(`${BASE}/dashboard/by-category`, () => HttpResponse.json(byCategory)),
+  http.get(`${BASE}/dashboard/by-responsible-party`, () => HttpResponse.json(byResponsibleParty)),
+  http.get(`${BASE}/dashboard/opened-vs-closed`, () => HttpResponse.json(trend)),
 ];

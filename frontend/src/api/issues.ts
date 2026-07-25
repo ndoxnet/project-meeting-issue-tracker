@@ -26,10 +26,16 @@ export interface IssueFilters {
   priority?: IssuePriority;
   category_id?: string;
   responsible_party_id?: string;
+  pic_user_id?: string;
   pic_name?: string;
   meeting_id?: string;
   meeting_occurrence_id?: string;
+  raised_date_from?: string;
+  raised_date_to?: string;
+  due_date_from?: string;
+  due_date_to?: string;
   overdue?: boolean;
+  stagnant?: boolean;
   include_archived?: boolean;
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
@@ -46,10 +52,16 @@ export function listIssues(filters: IssueFilters): Promise<Page<IssueListItem>> 
       priority: filters.priority,
       category_id: filters.category_id,
       responsible_party_id: filters.responsible_party_id,
+      pic_user_id: filters.pic_user_id,
       pic_name: filters.pic_name || undefined,
       meeting_id: filters.meeting_id,
       meeting_occurrence_id: filters.meeting_occurrence_id,
+      raised_date_from: filters.raised_date_from,
+      raised_date_to: filters.raised_date_to,
+      due_date_from: filters.due_date_from,
+      due_date_to: filters.due_date_to,
       overdue: filters.overdue,
+      stagnant: filters.stagnant,
       include_archived: filters.include_archived,
       sort_by: filters.sort_by,
       sort_order: filters.sort_order,

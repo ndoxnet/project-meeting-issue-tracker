@@ -46,6 +46,21 @@ CI route (no dev machine needed): see `docs/FRONTEND_CI_BOOTSTRAP.md`.
 - Loading / empty / error / unauthorized (401→login) / not-found states handled.
 - All request/response types derive from `src/api/generated/schema.ts`.
 
+## Implemented (Phase 2C.3 — attachments, export, monitoring)
+- **Attachments** on the issue detail page — list / upload (Editor/Admin) /
+  download / remove (Admin). Client-side size+type pre-check mirrors the backend
+  config; backend stays authoritative. 413/415 rejection codes handled distinctly.
+- **CSV export** — from the Issue Register (reuses active filters exactly) and the
+  **Reports** page; authenticated blob download; `EXPORT_LIMIT_EXCEEDED` handled.
+- **Monitoring** — Overdue / Stagnant / Due-this-week views (dedicated dashboard
+  endpoints) reachable from the KPI cards; **analytics** distributions + trend as
+  dependency-free CSS bars / an accessible table (values always readable as text).
+- **Toasts** — accessible live-region notifications supplementing inline errors.
+
+> **Audit** remains a placeholder — the frozen v1 contract exposes no
+> `GET /audit-logs` endpoint (a future read-only audit contract is tracked
+> separately). Users/Settings/master-data admin are deferred to Phase 2C.4.
+
 > **Contract mapping:** the API's "meetings" are master *types*; the UI "Meetings"
 > are **meeting occurrences** (dated, issue-linked). "Owner" ≈ PIC; issue history =
 > the issue-updates timeline. No non-contract fields are invented.

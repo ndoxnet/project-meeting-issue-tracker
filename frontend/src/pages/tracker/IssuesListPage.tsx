@@ -7,6 +7,7 @@ import { DataState } from '@/components/feedback/DataState';
 import { Pagination } from '@/components/ui/Pagination';
 import { IssueRow } from '@/components/tracker/IssueRow';
 import { Select, TextInput } from '@/components/ui/Field';
+import { ExportCsvButton } from '@/features/reports/ExportCsvButton';
 import { useAuth } from '@/auth/useAuth';
 import { useIssues, type IssueFilters } from '@/api/issues';
 import { useCategories } from '@/api/masterdata';
@@ -28,6 +29,7 @@ export function IssuesListPage() {
     priority: (params.get('priority') as IssueFilters['priority']) ?? undefined,
     category_id: params.get('category_id') ?? undefined,
     overdue: params.get('overdue') === 'true' ? true : undefined,
+    stagnant: params.get('stagnant') === 'true' ? true : undefined,
   };
   const issues = useIssues(filters);
 
@@ -51,14 +53,17 @@ export function IssuesListPage() {
         title="Issue Register"
         description="All project issues raised across meetings."
         actions={
-          hasRole('EDITOR', 'ADMIN') ? (
-            <Link
-              to="/app/issues/new"
-              className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-fg"
-            >
-              <Plus className="h-4 w-4" aria-hidden="true" /> New Issue
-            </Link>
-          ) : undefined
+          <div className="flex flex-wrap gap-2">
+            <ExportCsvButton filters={filters} />
+            {hasRole('EDITOR', 'ADMIN') && (
+              <Link
+                to="/app/issues/new"
+                className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-fg"
+              >
+                <Plus className="h-4 w-4" aria-hidden="true" /> New Issue
+              </Link>
+            )}
+          </div>
         }
       />
 
@@ -120,14 +125,24 @@ export function IssuesListPage() {
         </Select>
       </div>
 
-      <label className="mb-3 flex items-center gap-2 text-sm text-muted">
-        <input
-          type="checkbox"
-          checked={params.get('overdue') === 'true'}
-          onChange={(e) => setFilter('overdue', e.target.checked ? 'true' : '')}
-        />
-        Overdue only
-      </label>
+      <div className="mb-3 flex flex-wrap items-center gap-4">
+        <label className="flex items-center gap-2 text-sm text-muted">
+          <input
+            type="checkbox"
+            checked={params.get('overdue') === 'true'}
+            onChange={(e) => setFilter('overdue', e.target.checked ? 'true' : '')}
+          />
+          Overdue only
+        </label>
+        <label className="flex items-center gap-2 text-sm text-muted">
+          <input
+            type="checkbox"
+            checked={params.get('stagnant') === 'true'}
+            onChange={(e) => setFilter('stagnant', e.target.checked ? 'true' : '')}
+          />
+          Stagnant only
+        </label>
+      </div>
 
       <DataState
         isLoading={issues.isLoading}

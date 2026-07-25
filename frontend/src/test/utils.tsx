@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthContext } from '@/auth/AuthContext';
 import { AuthProvider } from '@/auth/AuthProvider';
+import { ToastProvider } from '@/components/feedback/ToastProvider';
 import { createQueryClient } from '@/api/queryClient';
 import type { AuthContextValue, CurrentUser } from '@/auth/authTypes';
 import { makeUser } from './handlers';
@@ -61,7 +62,9 @@ export function renderWithProviders(
     ...render(
       <QueryClientProvider client={queryClient}>
         <AuthContext.Provider value={authedAs(role)}>
-          <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
+          <ToastProvider>
+            <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
+          </ToastProvider>
         </AuthContext.Provider>
       </QueryClientProvider>,
     ),

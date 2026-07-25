@@ -15,9 +15,9 @@ describe('TrackerLandingPage', () => {
     expect(await screen.findByText(/Vendor commissioning attendance/i)).toBeInTheDocument();
   });
 
-  it('links overdue count to the filtered issues view', async () => {
+  it('links the overdue KPI card to the overdue monitoring view', async () => {
     renderWithProviders(<TrackerLandingPage />, { initialEntries: ['/app/dashboard'] });
     const overdue = await screen.findByRole('link', { name: /overdue/i });
-    expect(overdue).toHaveAttribute('href', '/app/issues?overdue=true');
+    expect(overdue).toHaveAttribute('href', '/app/monitoring/overdue');
   });
 });
