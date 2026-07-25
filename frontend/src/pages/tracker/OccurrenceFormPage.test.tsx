@@ -34,7 +34,13 @@ describe('OccurrenceFormPage — create', () => {
     const user = userEvent.setup();
     renderAt('/app/meetings/new');
 
-    await user.selectOptions(await screen.findByLabelText(/meeting type/i), 'mt-1');
+    // Wait for the async meeting-types query to populate the <option>s before
+    // selecting — otherwise only the placeholder option exists.
+    const meetingTypeSelect = await screen.findByLabelText(/meeting type/i);
+    await screen.findByRole('option', { name: /weekly progress meeting/i });
+    await user.selectOptions(meetingTypeSelect, 'mt-1');
+    expect(meetingTypeSelect).toHaveValue('mt-1');
+
     fireEvent.change(screen.getByLabelText(/meeting date/i), { target: { value: '2026-08-01' } });
     await user.click(screen.getByRole('button', { name: /create occurrence/i }));
 
