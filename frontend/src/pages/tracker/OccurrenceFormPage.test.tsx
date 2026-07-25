@@ -1,6 +1,6 @@
 // Concept by MrHan (08974747477)
 import { describe, expect, it } from 'vitest';
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { http, HttpResponse } from 'msw';
@@ -34,8 +34,8 @@ describe('OccurrenceFormPage — create', () => {
     const user = userEvent.setup();
     renderAt('/app/meetings/new');
 
-    await user.selectOptions(await screen.findByLabelText('Meeting type'), 'mt-1');
-    fireEvent.change(screen.getByLabelText('Meeting date'), { target: { value: '2026-08-01' } });
+    await user.selectOptions(await screen.findByLabelText(/meeting type/i), 'mt-1');
+    fireEvent.change(screen.getByLabelText(/meeting date/i), { target: { value: '2026-08-01' } });
     await user.click(screen.getByRole('button', { name: /create occurrence/i }));
 
     expect(await screen.findByText('Occurrence detail')).toBeInTheDocument();
@@ -56,16 +56,26 @@ describe('OccurrenceFormPage — edit', () => {
     const user = userEvent.setup();
     renderAt('/app/meetings/occ-1/edit');
 
-    // Type name is shown read-only (from the occurrence's meeting_id -> mt-1).
-    expect(await screen.findByDisplayValue('Weekly Progress Meeting')).toBeInTheDocument();
-    expect(screen.getByLabelText('Meeting date')).toHaveValue('2026-07-10');
+    // Wait for the form to populate (occurrence loaded), then assert each control
+    // by its label + value — never by display value (avoids the disabled/read-only
+    // matching gap and ambiguity).
+    expect(await screen.findByLabelText(/meeting date/i)).toHaveValue('2026-07-10');
 
-    const agenda = screen.getByLabelText('Agenda');
-    await user.clear(agenda);
-    await user.type(agenda, 'Revised agenda');
+    // Meeting type resolves from a separate query and is shown read-only/disabled.
+    const meetingType = screen.getByLabelText(/meeting type/i);
+    await waitFor(() => expect(meetingType).toHaveValue('Weekly Progress Meeting'));
+    expect(meetingType).toBeDisabled();
+
+    expect(screen.getByLabelText(/meeting number/i)).toHaveValue('#14');
+    expect(screen.getByLabelText(/reference number/i)).toHaveValue('MoM-14');
+    expect(screen.getByLabelText(/agenda/i)).toHaveValue('Weekly progress review');
+
+    // Change one supported field; the PATCH must contain ONLY that field.
+    await user.clear(screen.getByLabelText(/reference number/i));
+    await user.type(screen.getByLabelText(/reference number/i), 'MoM-14 Revised');
     await user.click(screen.getByRole('button', { name: /save changes/i }));
 
     expect(await screen.findByText(/Meeting occurrence updated/i)).toBeInTheDocument();
-    expect(patched).toEqual({ agenda: 'Revised agenda' });
+    expect(patched).toEqual({ reference_number: 'MoM-14 Revised' });
   });
 });

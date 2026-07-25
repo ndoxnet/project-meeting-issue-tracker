@@ -34,7 +34,7 @@ describe('VoidUpdateButton (via Timeline)', () => {
 
     await user.click(screen.getByRole('button', { name: 'Void' }));
     expect(screen.getByText(/permanently voids/i)).toBeInTheDocument();
-    await user.type(screen.getByLabelText('Reason'), 'Duplicate entry');
+    await user.type(screen.getByLabelText(/reason/i), 'Duplicate entry');
     await user.click(screen.getByRole('button', { name: /void update/i }));
 
     expect(await screen.findByText(/Follow-up update voided/i)).toBeInTheDocument();
@@ -51,10 +51,10 @@ describe('VoidUpdateButton (via Timeline)', () => {
     renderWithProviders(<Timeline updates={[makeIssueUpdate()]} issueId="iss-1" canVoid />);
 
     await user.click(screen.getByRole('button', { name: 'Void' }));
-    await user.type(screen.getByLabelText('Reason'), 'My reason');
+    await user.type(screen.getByLabelText(/reason/i), 'My reason');
     await user.click(screen.getByRole('button', { name: /void update/i }));
 
     expect(await screen.findByText(/Already voided/i)).toBeInTheDocument();
-    expect(screen.getByLabelText('Reason')).toHaveValue('My reason');
+    expect(screen.getByLabelText(/reason/i)).toHaveValue('My reason');
   });
 });

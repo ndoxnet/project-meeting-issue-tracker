@@ -37,7 +37,7 @@ describe('NamedResourceManager', () => {
     await screen.findByText('Engineering');
 
     await user.click(screen.getByRole('button', { name: /new category/i }));
-    await user.type(screen.getByLabelText('Name'), 'Safety');
+    await user.type(screen.getByLabelText(/^name/i), 'Safety');
     await user.click(screen.getByRole('button', { name: /create category/i }));
 
     expect(await screen.findByText(/Category created/i)).toBeInTheDocument();
@@ -82,7 +82,7 @@ describe('NamedResourceManager', () => {
     await screen.findByText('Engineering');
 
     await user.click(screen.getByRole('button', { name: /new category/i }));
-    await user.type(screen.getByLabelText('Name'), 'Engineering');
+    await user.type(screen.getByLabelText(/^name/i), 'Engineering');
     await user.click(screen.getByRole('button', { name: /create category/i }));
 
     const dialog = await screen.findByRole('dialog');
