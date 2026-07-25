@@ -19,7 +19,7 @@ on:
       - ".github/workflows/frontend-validation.yml"
   push:
     branches:
-      - master
+      - main
     paths:
       - "frontend/**"
       - "docs/api/openapi.json"
