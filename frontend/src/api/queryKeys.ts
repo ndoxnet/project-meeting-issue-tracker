@@ -29,5 +29,8 @@ export const queryKeys = {
   master: {
     categories: ['master', 'categories'] as const,
     responsibleParties: ['master', 'responsible-parties'] as const,
+    // Admin management lists (may include inactive) — kept separate from the
+    // active-only picker keys above so a management view never pollutes pickers.
+    adminList: (kind: string, filters: unknown) => ['master-admin', kind, filters] as const,
   },
 } as const;

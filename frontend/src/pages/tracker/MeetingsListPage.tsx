@@ -1,16 +1,19 @@
 // Concept by MrHan (08974747477)
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataState } from '@/components/feedback/DataState';
 import { Pagination } from '@/components/ui/Pagination';
 import { MeetingCard } from '@/components/tracker/MeetingCard';
 import { Select } from '@/components/ui/Field';
+import { useAuth } from '@/auth/useAuth';
 import { useOccurrences } from '@/api/meetings';
 import { useMeetingTypes } from '@/api/masterdata';
 
 export function MeetingsListPage() {
   usePageTitle('Meetings');
+  const { hasRole } = useAuth();
   const [params, setParams] = useSearchParams();
   const types = useMeetingTypes();
 
@@ -38,6 +41,16 @@ export function MeetingsListPage() {
       <PageHeader
         title="Meetings"
         description="Recorded meeting occurrences and their issues."
+        actions={
+          hasRole('EDITOR', 'ADMIN') ? (
+            <Link
+              to="/app/meetings/new"
+              className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-fg"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" /> New occurrence
+            </Link>
+          ) : undefined
+        }
       />
       <div className="mb-4 max-w-xs">
         <Select

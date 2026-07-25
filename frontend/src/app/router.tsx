@@ -14,7 +14,9 @@ import { IssueDetailPage } from '@/pages/tracker/IssueDetailPage';
 import { IssueCreatePage } from '@/pages/tracker/IssueCreatePage';
 import { IssueEditPage } from '@/pages/tracker/IssueEditPage';
 import { MonitoringPage } from '@/pages/tracker/MonitoringPage';
+import { OccurrenceFormPage } from '@/pages/tracker/OccurrenceFormPage';
 import { ReportsPage } from '@/pages/tracker/ReportsPage';
+import { MasterDataPage } from '@/pages/tracker/MasterDataPage';
 import { UsersPlaceholderPage } from '@/pages/UsersPlaceholderPage';
 import { AuditPlaceholderPage } from '@/pages/AuditPlaceholderPage';
 import { SettingsPlaceholderPage } from '@/pages/SettingsPlaceholderPage';
@@ -33,6 +35,15 @@ export const router = createBrowserRouter([
           { index: true, element: <Navigate to="/app/dashboard" replace /> },
           { path: 'dashboard', element: <TrackerLandingPage /> },
           { path: 'meetings', element: <MeetingsListPage /> },
+          // Occurrence authoring stays in the Meetings area, gated Editor/Admin
+          // (NOT under the Admin-only navigation section).
+          {
+            element: <RoleRoute allowedRoles={['EDITOR', 'ADMIN']} />,
+            children: [
+              { path: 'meetings/new', element: <OccurrenceFormPage /> },
+              { path: 'meetings/:meetingId/edit', element: <OccurrenceFormPage /> },
+            ],
+          },
           { path: 'meetings/:meetingId', element: <MeetingDetailPage /> },
           { path: 'issues', element: <IssuesListPage /> },
           { path: 'issues/new', element: <IssueCreatePage /> },
@@ -43,6 +54,7 @@ export const router = createBrowserRouter([
           {
             element: <RoleRoute allowedRoles={['ADMIN']} />,
             children: [
+              { path: 'master-data', element: <MasterDataPage /> },
               { path: 'users', element: <UsersPlaceholderPage /> },
               { path: 'audit', element: <AuditPlaceholderPage /> },
               { path: 'settings', element: <SettingsPlaceholderPage /> },

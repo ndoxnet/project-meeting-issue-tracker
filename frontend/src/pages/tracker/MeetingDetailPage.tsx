@@ -1,10 +1,11 @@
 // Concept by MrHan (08974747477)
-import { useParams } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { ExternalLink, Pencil } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataState } from '@/components/feedback/DataState';
 import { IssueRow } from '@/components/tracker/IssueRow';
+import { useAuth } from '@/auth/useAuth';
 import { useOccurrence } from '@/api/meetings';
 import { useMeetingTypes } from '@/api/masterdata';
 import { useIssues } from '@/api/issues';
@@ -12,6 +13,7 @@ import { formatDate, formatDateTime } from '@/lib/dates';
 
 export function MeetingDetailPage() {
   const { meetingId = '' } = useParams();
+  const { hasRole } = useAuth();
   const occ = useOccurrence(meetingId);
   const types = useMeetingTypes();
   const issues = useIssues({ meeting_occurrence_id: meetingId, page: 1, page_size: 100 });
@@ -23,7 +25,21 @@ export function MeetingDetailPage() {
 
   return (
     <section>
-      <PageHeader title="Meeting" backTo="/app/meetings" backLabel="Back to meetings" />
+      <PageHeader
+        title="Meeting"
+        backTo="/app/meetings"
+        backLabel="Back to meetings"
+        actions={
+          occ.data && hasRole('EDITOR', 'ADMIN') ? (
+            <Link
+              to={`/app/meetings/${meetingId}/edit`}
+              className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-3 py-2 text-sm text-text hover:bg-background"
+            >
+              <Pencil className="h-4 w-4" aria-hidden="true" /> Edit
+            </Link>
+          ) : undefined
+        }
+      />
       <DataState isLoading={occ.isLoading} error={occ.error} loadingLabel="Loading meeting…">
         {occ.data && (
           <>

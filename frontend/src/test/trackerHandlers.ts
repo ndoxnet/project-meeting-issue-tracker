@@ -13,6 +13,7 @@ import type {
   MonthlyTrendPoint,
   NamedResponse,
   Page,
+  VoidResponse,
 } from '@/api/types';
 
 const BASE = '/api/v1';
@@ -255,4 +256,49 @@ export const trackerHandlers = [
   http.get(`${BASE}/dashboard/by-category`, () => HttpResponse.json(byCategory)),
   http.get(`${BASE}/dashboard/by-responsible-party`, () => HttpResponse.json(byResponsibleParty)),
   http.get(`${BASE}/dashboard/opened-vs-closed`, () => HttpResponse.json(trend)),
+
+  // ---- master-data mutations (categories / responsible-parties / meetings) ----
+  ...['/categories', '/responsible-parties', '/meetings'].flatMap((p) => [
+    http.post(`${BASE}${p}`, async ({ request }) => {
+      const body = (await request.json()) as { name?: string };
+      return HttpResponse.json(makeNamed(body.name ?? 'New', 'named-new'), { status: 201 });
+    }),
+    http.patch(`${BASE}${p}/:id`, async ({ request, params }) => {
+      const body = (await request.json()) as { name?: string };
+      return HttpResponse.json(makeNamed(body.name ?? 'Updated', String(params.id)));
+    }),
+    http.post(`${BASE}${p}/:id/activate`, ({ params }) =>
+      HttpResponse.json(makeNamed('Item', String(params.id))),
+    ),
+    http.post(`${BASE}${p}/:id/deactivate`, ({ params }) =>
+      HttpResponse.json({ ...makeNamed('Item', String(params.id)), is_active: false }),
+    ),
+  ]),
+
+  // ---- meeting-occurrence authoring ----
+  http.post(`${BASE}/meeting-occurrences`, async ({ request }) => {
+    const body = (await request.json()) as { meeting_id: string; meeting_date: string };
+    return HttpResponse.json(
+      makeOccurrence({ id: 'occ-new', meeting_id: body.meeting_id, meeting_date: body.meeting_date }),
+      { status: 201 },
+    );
+  }),
+  http.patch(`${BASE}/meeting-occurrences/:id`, ({ params }) =>
+    HttpResponse.json(makeOccurrence({ id: String(params.id) })),
+  ),
+
+  // ---- void follow-up update ----
+  http.post(`${BASE}/issues/:id/updates/:uid/void`, async ({ request, params }) => {
+    const body = (await request.json()) as { void_reason: string };
+    const res: VoidResponse = {
+      update: makeIssueUpdate({
+        id: String(params.uid),
+        voided_at: '2026-07-20T00:00:00Z',
+        voided_by: 'user-1',
+        void_reason: body.void_reason,
+      }),
+      warnings: [],
+    };
+    return HttpResponse.json(res);
+  }),
 ];

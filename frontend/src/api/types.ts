@@ -30,7 +30,11 @@ export interface Page<T> {
 
 // ---- master data ----
 export type NamedResponse = S['NamedResponse'];
+export type NamedCreate = S['NamedCreate'];
+export type NamedUpdate = S['NamedUpdate'];
 export type MeetingOccurrence = S['MeetingOccurrenceResponse'];
+export type MeetingOccurrenceCreate = S['MeetingOccurrenceCreate'];
+export type MeetingOccurrenceUpdate = S['MeetingOccurrenceUpdate'];
 
 // ---- issues ----
 export type IssueListItem = S['IssueListItem'];
@@ -44,6 +48,8 @@ export type IssueCloseRequest = S['IssueCloseRequest'];
 export type IssueReopenRequest = S['IssueReopenRequest'];
 export type IssueUpdateCreate = S['IssueUpdateCreate'];
 export type IssueUpdateResponse = S['IssueUpdateResponse'];
+export type IssueUpdateVoidRequest = S['IssueUpdateVoidRequest'];
+export type VoidResponse = S['VoidResponse'];
 
 // ---- attachments ----
 export type AttachmentResponse = S['AttachmentResponse'];

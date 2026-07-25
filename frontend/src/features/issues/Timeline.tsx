@@ -1,9 +1,21 @@
 // Concept by MrHan (08974747477)
 import type { IssueUpdateResponse } from '@/api/types';
 import { formatDate, formatDateTime } from '@/lib/dates';
+import { VoidUpdateButton } from './VoidUpdateButton';
 
-/** Chronological follow-up history (from GET /issues/:id/updates). Read-only. */
-export function Timeline({ updates }: { updates: IssueUpdateResponse[] }) {
+/**
+ * Chronological follow-up history (from GET /issues/:id/updates). When
+ * `canVoid` is set (ADMIN) each non-voided entry offers a Void action.
+ */
+export function Timeline({
+  updates,
+  issueId,
+  canVoid = false,
+}: {
+  updates: IssueUpdateResponse[];
+  issueId?: string;
+  canVoid?: boolean;
+}) {
   return (
     <ol className="space-y-3">
       {updates.map((u) => (
@@ -20,8 +32,16 @@ export function Timeline({ updates }: { updates: IssueUpdateResponse[] }) {
                 Voided
               </span>
             )}
+            {canVoid && issueId && !u.voided_at && (
+              <span className="ml-auto">
+                <VoidUpdateButton issueId={issueId} update={u} />
+              </span>
+            )}
           </div>
           <p className="mt-1 text-sm text-text">{u.update_note}</p>
+          {u.voided_at && u.void_reason && (
+            <p className="mt-1 text-xs text-amber-700">Void reason: {u.void_reason}</p>
+          )}
           {u.decision && <p className="mt-1 text-sm text-muted">Decision: {u.decision}</p>}
           {u.next_action && <p className="mt-1 text-sm text-muted">Next action: {u.next_action}</p>}
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">

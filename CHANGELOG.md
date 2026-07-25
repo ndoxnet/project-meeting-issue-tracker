@@ -3,7 +3,45 @@
 > Concept by MrHan (08974747477)
 All notable changes to this project are documented here.
 
-## [unreleased] — Phase 2C.3 — Attachments, CSV Export, and Monitoring Views
+## [unreleased] — Phase 2C.4A — Operational Administration
+### Added (frontend; validated via GitHub Actions, not on the VPS)
+- **Master-data management** (ADMIN) at `/app/master-data` — categories,
+  responsible parties, and meeting types via a generic manager
+  (`features/masterdata/`, `api/masterdataAdmin.ts`). List with active/inactive
+  filter (`is_active`), create/edit (`NamedCreate`/`NamedUpdate` = `{name,
+  description}` only), and **activate/deactivate** (contract actions — never a
+  simulated delete). Deactivation is confirmed with explicit "not a deletion"
+  wording; existing issues/meetings keep their historical values (inactive items
+  are excluded only from pickers for NEW records).
+- **Meeting-occurrence authoring** (EDITOR/ADMIN) in the Meetings area —
+  `New occurrence` (list) and `Edit` (detail) → `pages/tracker/OccurrenceFormPage`
+  (`meeting_occurrences_create/update`). The meeting **type** is immutable on edit
+  (not in `MeetingOccurrenceUpdate`); edit is diff-based; `meeting_date` is
+  date-only and sent verbatim (no timezone shift). Routes are gated
+  `RoleRoute(['EDITOR','ADMIN'])`, NOT under Admin-only navigation.
+- **Void follow-up update** (ADMIN) in the issue timeline
+  (`features/issues/VoidUpdateButton`, `issue_updates_void`) — required reason,
+  explicit permanent/irreversible warning, reason preserved on recoverable error;
+  voided entries render clearly with their reason.
+- **Cache invalidation:** master-data mutations invalidate the admin list, the
+  active-only picker, and `['dashboard']`; occurrence mutations invalidate
+  occurrence lists, the occurrence detail, and `['dashboard']`; void reuses the
+  issue invalidation (detail, timeline, dashboard, lists).
+- **Tests:** master-data (list/create/deactivate-confirm/active-filter→API/
+  validation-inline), occurrence (create payload+navigate, edit populate+diff+
+  read-only type), void (gating/success/reason-preserved-on-error), meetings
+  authoring role gating.
+### Notes
+- Roles enforced by the backend and mirrored in the UI: master-data mutations
+  ADMIN; occurrence authoring EDITOR/ADMIN; void ADMIN. Menu hiding is UX only.
+- **Deferred to Phase 2C.4B** (not started): user administration, initial-password
+  handling, password reset, role changes, user activation, and application
+  settings. Before 2C.4B, the backend last-admin / self-action protections must be
+  inspected and reported (per the phase directive). **Audit** remains a documented
+  placeholder. No backend/DB change. No npm run on the VPS.
+
+## [unreleased] — Phase 2C.3 — Attachments, CSV Export, and Monitoring Views (PASS)
+> Frontend Validation green on commit `f334bb7`; recorded as PASS.
 ### Added (frontend; validated via GitHub Actions, not on the VPS)
 - **Issue attachments** (`features/attachments/`): list (all roles), upload
   (Editor/Admin, non-archived), download, and remove (Admin, confirm dialog),

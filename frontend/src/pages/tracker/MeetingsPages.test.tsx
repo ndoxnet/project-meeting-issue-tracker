@@ -24,6 +24,17 @@ describe('MeetingsListPage', () => {
     renderWithProviders(<MeetingsListPage />, { initialEntries: ['/app/meetings'] });
     expect(await screen.findByText(/No meetings recorded/i)).toBeInTheDocument();
   });
+
+  it('shows the New occurrence action for an editor', async () => {
+    renderWithProviders(<MeetingsListPage />, { role: 'EDITOR', initialEntries: ['/app/meetings'] });
+    expect(await screen.findByRole('link', { name: /new occurrence/i })).toBeInTheDocument();
+  });
+
+  it('hides the New occurrence action from a viewer', async () => {
+    renderWithProviders(<MeetingsListPage />, { role: 'VIEWER', initialEntries: ['/app/meetings'] });
+    await screen.findByRole('link', { name: /weekly progress meeting/i });
+    expect(screen.queryByRole('link', { name: /new occurrence/i })).not.toBeInTheDocument();
+  });
 });
 
 describe('MeetingDetailPage', () => {

@@ -57,9 +57,20 @@ CI route (no dev machine needed): see `docs/FRONTEND_CI_BOOTSTRAP.md`.
   dependency-free CSS bars / an accessible table (values always readable as text).
 - **Toasts** — accessible live-region notifications supplementing inline errors.
 
+## Implemented (Phase 2C.4A — operational administration)
+- **Master data** (`/app/master-data`, ADMIN) — manage categories, responsible
+  parties, and meeting types: list with active/inactive filter, create/edit,
+  activate/deactivate (contract actions, not delete). Deactivation keeps historical
+  values on existing records; inactive items are hidden only from new-record pickers.
+- **Meeting-occurrence authoring** (Editor/Admin) — create/edit occurrences from
+  the Meetings area (type immutable on edit; diff-based; date-only fields verbatim).
+- **Void follow-up updates** (ADMIN) — permanent, reason-required action in the
+  issue timeline; the reason survives a recoverable error.
+
+> **Deferred — Phase 2C.4B** (not started): user administration, passwords,
+> password reset, role changes, user activation, and application settings.
 > **Audit** remains a placeholder — the frozen v1 contract exposes no
-> `GET /audit-logs` endpoint (a future read-only audit contract is tracked
-> separately). Users/Settings/master-data admin are deferred to Phase 2C.4.
+> `GET /audit-logs` endpoint (tracked in `docs/backlog/`).
 
 > **Contract mapping:** the API's "meetings" are master *types*; the UI "Meetings"
 > are **meeting occurrences** (dated, issue-linked). "Owner" ≈ PIC; issue history =

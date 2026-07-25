@@ -107,7 +107,13 @@ export function IssueDetailPage() {
               loadingLabel="Loading timeline…"
               emptyTitle="No follow-up updates yet"
             >
-              {updates.data && <Timeline updates={updates.data} />}
+              {updates.data && (
+                <Timeline
+                  updates={updates.data}
+                  issueId={issue.data.id}
+                  canVoid={hasRole('ADMIN')}
+                />
+              )}
             </DataState>
 
             <AttachmentsPanel issueId={issue.data.id} archived={issue.data.archived_at != null} />

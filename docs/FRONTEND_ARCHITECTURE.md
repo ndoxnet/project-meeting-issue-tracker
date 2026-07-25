@@ -96,7 +96,27 @@ Install/typecheck/lint/test/build run **off-VPS via GitHub Actions**
 - **Toasts** (`components/feedback/ToastProvider`) are accessible live regions
   that supplement — never replace — inline errors.
 
+## Operational administration (Phase 2C.4A)
+- **Master data** (`features/masterdata/`, `api/masterdataAdmin.ts`): one generic
+  manager over the three "named" resources (categories, responsible parties,
+  meeting types), which share `NamedCreate`/`NamedUpdate`/`NamedResponse` and
+  identical endpoints. Mutations are **ADMIN** (backend authoritative), so the
+  page sits under `RoleRoute(['ADMIN'])` at `/app/master-data`. Only `name`/
+  `description` are ever sent; **activate/deactivate** use the contract actions —
+  there is no delete. Active/inactive filtering uses the `is_active` query param.
+- **Meeting-occurrence authoring** (`pages/tracker/OccurrenceFormPage`): create +
+  edit, **EDITOR/ADMIN** (`require_editor`), reached from the Meetings pages —
+  deliberately NOT under Admin navigation. The meeting type is immutable on edit;
+  edits are diff-based; date-only fields are sent verbatim (no tz shift).
+- **Void follow-up** (`features/issues/VoidUpdateButton`): **ADMIN**, in the
+  timeline; permanent/irreversible, required reason, reason preserved on error.
+- **Invalidation:** master-data → admin list + active picker + `['dashboard']`;
+  occurrence → occurrence lists + detail + `['dashboard']`; void → issue detail +
+  timeline + dashboard + lists.
+
 ## Not implemented (deferred)
-Users/Audit/Settings remain placeholders; **Audit** is contract-blocked (no
-`GET /audit-logs` in the frozen v1 API — a future read-only audit contract is
-tracked separately). Void-update UI and admin/master-data management are Phase 2C.4.
+Users/Settings remain placeholders — **Phase 2C.4B** (security-sensitive
+administration: user CRUD, passwords, role changes, activation, settings), not
+started; its last-admin/self-action backend protections must be inspected before
+implementation. **Audit** is contract-blocked (no `GET /audit-logs` in the frozen
+v1 API — a future read-only audit contract is tracked in `docs/backlog/`).

@@ -14,8 +14,10 @@ import type {
   IssueStatusChangeRequest,
   IssueUpdateCreate,
   IssueUpdateResponse,
+  IssueUpdateVoidRequest,
   Page,
   IssueListItem,
+  VoidResponse,
 } from './types';
 
 export interface IssueFilters {
@@ -106,6 +108,14 @@ export function addFollowUp(id: string, body: IssueUpdateCreate): Promise<IssueU
   return apiClient.post<IssueUpdateResponse>(`/issues/${id}/updates`, { json: body });
 }
 
+export function voidUpdate(
+  issueId: string,
+  updateId: string,
+  body: IssueUpdateVoidRequest,
+): Promise<VoidResponse> {
+  return apiClient.post<VoidResponse>(`/issues/${issueId}/updates/${updateId}/void`, { json: body });
+}
+
 // ---- query hooks ----
 export function useIssues(filters: IssueFilters) {
   return useQuery({
@@ -187,6 +197,17 @@ export function useAddFollowUp(id: string) {
   const invalidate = useInvalidateIssue(id);
   return useMutation({
     mutationFn: (body: IssueUpdateCreate) => addFollowUp(id, body),
+    onSuccess: invalidate,
+  });
+}
+
+export function useVoidUpdate(issueId: string) {
+  // Voiding changes the issue's derived state, timeline, dashboard, and lists —
+  // the standard issue invalidation covers all of them.
+  const invalidate = useInvalidateIssue(issueId);
+  return useMutation({
+    mutationFn: ({ updateId, body }: { updateId: string; body: IssueUpdateVoidRequest }) =>
+      voidUpdate(issueId, updateId, body),
     onSuccess: invalidate,
   });
 }
