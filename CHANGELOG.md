@@ -3,6 +3,39 @@
 > Concept by MrHan (08974747477)
 All notable changes to this project are documented here.
 
+## [unreleased] — Phase 2C.4B — User Administration & Read-only Settings
+### Added (frontend; validated via GitHub Actions, not on the VPS)
+- **User administration** (ADMIN) at `/app/users` (`api/users.ts`, `features/users/`):
+  list with search + active/inactive filter + pagination; **create**
+  (`UserCreate`: username/full_name/email/role/initial password, `type=password`,
+  policy hint ≥12 & ≠ identity — backend authoritative); **edit** allowed fields
+  only (`UserUpdate` = email/full_name/role, diff-based); **activate/deactivate**
+  (with confirm dialog); **role changes** via edit; **reset password**
+  (`PasswordResetRequest`).
+- **UX self-action guards (convenience only — NOT security):** the UI prevents
+  deactivating your own account and changing your own role; documented that
+  backend enforcement is a planned production-hardening task. The backend's
+  last-admin guard (422) is surfaced inline.
+- **Reset-password note:** the modal states that existing authenticated sessions
+  remain valid until backend token revocation is implemented (deactivate to block
+  access immediately). Session invalidation is intentionally out of scope here.
+- **Application settings** (ADMIN) at `/app/settings` — **read-only** reference
+  view (`api/settings.ts`) with a banner explaining runtime config currently comes
+  from environment configuration, not the `app_settings` table. No editable path.
+- **Tests:** users (list/create+payload/weak-password-guard/conflict-inline/
+  edit-diff/role-change/self-role-guard/self-deactivate-disabled/last-admin-422-
+  inline/reset+session-note+payload) and settings (read-only, banner, no controls).
+### Notes
+- Every request/response type derives from the generated schema; only
+  contract-permitted fields are sent. RBAC: all routes under `RoleRoute(['ADMIN'])`.
+- Editable settings, self-action **backend** enforcement, token revocation on
+  reset, and login rate-limiting remain deferred production-hardening tasks
+  (governance review). Audit remains a documented placeholder. No backend/DB
+  change. No npm run on the VPS.
+
+## [unreleased] — Phase 2C.4A — Operational Administration (PASS)
+> Frontend Validation green on commit `561e6a2`; recorded as PASS. (Details below.)
+
 ## [unreleased] — Phase 2C.4A — Operational Administration
 ### Added (frontend; validated via GitHub Actions, not on the VPS)
 - **Master-data management** (ADMIN) at `/app/master-data` — categories,

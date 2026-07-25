@@ -1,7 +1,9 @@
 // Concept by MrHan (08974747477)
 // MSW handlers + fixtures for meetings/issues/dashboard/master-data (frozen v1).
 import { http, HttpResponse } from 'msw';
+import { makeUser } from './handlers';
 import type {
+  AppSettingResponse,
   AttachmentResponse,
   CountByLabel,
   DashboardSummary,
@@ -13,6 +15,7 @@ import type {
   MonthlyTrendPoint,
   NamedResponse,
   Page,
+  UserResponse,
   VoidResponse,
 } from '@/api/types';
 
@@ -165,6 +168,27 @@ const trend: MonthlyTrendPoint[] = [
   { month: '2026-07', opened: 5, closed: 3 },
 ];
 
+const appSettings: AppSettingResponse[] = [
+  {
+    key: 'stagnant_days',
+    value: 14,
+    description: 'Days without an update before an issue is stagnant',
+    updated_at: '2026-07-20T00:00:00Z',
+  },
+  {
+    key: 'attachment_max_mb',
+    value: 10,
+    description: null,
+    updated_at: '2026-07-20T00:00:00Z',
+  },
+  {
+    key: 'attachment_allowed_types',
+    value: ['application/pdf', 'image/jpeg', 'image/png'],
+    description: null,
+    updated_at: '2026-07-20T00:00:00Z',
+  },
+];
+
 const summary: DashboardSummary = {
   open_count: 3,
   in_progress_count: 2,
@@ -286,6 +310,30 @@ export const trackerHandlers = [
   http.patch(`${BASE}/meeting-occurrences/:id`, ({ params }) =>
     HttpResponse.json(makeOccurrence({ id: String(params.id) })),
   ),
+
+  // ---- user administration ----
+  http.get(`${BASE}/users`, () =>
+    HttpResponse.json(page<UserResponse>([makeUser('ADMIN', 'admin1'), makeUser('EDITOR', 'editor1')])),
+  ),
+  http.post(`${BASE}/users`, async ({ request }) => {
+    const body = (await request.json()) as { username?: string };
+    return HttpResponse.json(makeUser('EDITOR', body.username ?? 'newuser'), { status: 201 });
+  }),
+  http.patch(`${BASE}/users/:id`, async ({ params }) =>
+    HttpResponse.json({ ...makeUser('EDITOR', 'editor1'), id: String(params.id) }),
+  ),
+  http.post(`${BASE}/users/:id/activate`, ({ params }) =>
+    HttpResponse.json({ ...makeUser('EDITOR', 'editor1'), id: String(params.id), is_active: true }),
+  ),
+  http.post(`${BASE}/users/:id/deactivate`, ({ params }) =>
+    HttpResponse.json({ ...makeUser('EDITOR', 'editor1'), id: String(params.id), is_active: false }),
+  ),
+  http.post(`${BASE}/users/:id/reset-password`, () =>
+    HttpResponse.json({ message: 'Password has been reset.' }),
+  ),
+
+  // ---- app settings (read-only) ----
+  http.get(`${BASE}/settings`, () => HttpResponse.json(appSettings)),
 
   // ---- void follow-up update ----
   http.post(`${BASE}/issues/:id/updates/:uid/void`, async ({ request, params }) => {

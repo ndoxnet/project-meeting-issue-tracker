@@ -26,6 +26,12 @@ export const queryKeys = {
     updates: (id: string) => ['issue', id, 'updates'] as const,
     attachments: (id: string) => ['issue', id, 'attachments'] as const,
   },
+  users: {
+    list: (filters: unknown) => ['users', filters] as const,
+  },
+  settings: {
+    all: ['app-settings'] as const,
+  },
   master: {
     categories: ['master', 'categories'] as const,
     responsibleParties: ['master', 'responsible-parties'] as const,

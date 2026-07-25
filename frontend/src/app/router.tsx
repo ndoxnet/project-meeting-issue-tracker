@@ -17,9 +17,9 @@ import { MonitoringPage } from '@/pages/tracker/MonitoringPage';
 import { OccurrenceFormPage } from '@/pages/tracker/OccurrenceFormPage';
 import { ReportsPage } from '@/pages/tracker/ReportsPage';
 import { MasterDataPage } from '@/pages/tracker/MasterDataPage';
-import { UsersPlaceholderPage } from '@/pages/UsersPlaceholderPage';
+import { UsersPage } from '@/pages/tracker/UsersPage';
+import { SettingsPage } from '@/pages/tracker/SettingsPage';
 import { AuditPlaceholderPage } from '@/pages/AuditPlaceholderPage';
-import { SettingsPlaceholderPage } from '@/pages/SettingsPlaceholderPage';
 
 export const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/app/dashboard" replace /> },
@@ -55,9 +55,9 @@ export const router = createBrowserRouter([
             element: <RoleRoute allowedRoles={['ADMIN']} />,
             children: [
               { path: 'master-data', element: <MasterDataPage /> },
-              { path: 'users', element: <UsersPlaceholderPage /> },
+              { path: 'users', element: <UsersPage /> },
               { path: 'audit', element: <AuditPlaceholderPage /> },
-              { path: 'settings', element: <SettingsPlaceholderPage /> },
+              { path: 'settings', element: <SettingsPage /> },
             ],
           },
           { path: '*', element: <NotFoundPage /> },

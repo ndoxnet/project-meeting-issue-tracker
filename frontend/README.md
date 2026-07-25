@@ -67,10 +67,20 @@ CI route (no dev machine needed): see `docs/FRONTEND_CI_BOOTSTRAP.md`.
 - **Void follow-up updates** (ADMIN) — permanent, reason-required action in the
   issue timeline; the reason survives a recoverable error.
 
-> **Deferred — Phase 2C.4B** (not started): user administration, passwords,
-> password reset, role changes, user activation, and application settings.
-> **Audit** remains a placeholder — the frozen v1 contract exposes no
-> `GET /audit-logs` endpoint (tracked in `docs/backlog/`).
+## Implemented (Phase 2C.4B — user administration & read-only settings)
+- **Users** (`/app/users`, ADMIN) — list/search/filter, create, edit (email/full
+  name/role only), activate/deactivate, role change, reset password. **UX-only**
+  self-action guards block self-deactivate/self-role-change (backend enforcement is
+  a planned hardening task); the last-admin guard (422) surfaces inline.
+- Reset password notes that existing sessions stay valid until backend token
+  revocation exists (deactivate to revoke now).
+- **Settings** (`/app/settings`, ADMIN) — **read-only** reference view; a banner
+  explains runtime config comes from environment configuration, not the DB table.
+
+> **Deferred (production hardening / governance):** editable settings, self-action
+> backend enforcement, reset-time session revocation, login rate-limiting.
+> **Audit** remains a placeholder — no `GET /audit-logs` in the frozen v1 contract
+> (tracked in `docs/backlog/`).
 
 > **Contract mapping:** the API's "meetings" are master *types*; the UI "Meetings"
 > are **meeting occurrences** (dated, issue-linked). "Owner" ≈ PIC; issue history =

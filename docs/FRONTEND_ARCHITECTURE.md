@@ -114,9 +114,26 @@ Install/typecheck/lint/test/build run **off-VPS via GitHub Actions**
   occurrence → occurrence lists + detail + `['dashboard']`; void → issue detail +
   timeline + dashboard + lists.
 
+## User administration & settings (Phase 2C.4B)
+- **Users** (`/app/users`, ADMIN — `api/users.ts`, `features/users/`): list
+  (search + active filter), create (`UserCreate`), edit **allowed fields only**
+  (`UserUpdate` = email/full_name/role, diff-based), activate/deactivate (confirm
+  dialog), role change (via edit), reset password (`PasswordResetRequest`).
+- **UX-only self-action guards:** the UI blocks self-deactivation and self-role-
+  change; these are **convenience guards, not security** — backend enforcement is
+  a planned production-hardening task. The backend last-admin guard (422) is
+  surfaced inline; conflicts/validation shown inline with toast supplements.
+- **Reset password** shows a note that existing sessions stay valid until backend
+  token revocation exists (deactivate to revoke now). Passwords are `type=password`,
+  never cached/logged/URL'd; policy hints (≥12, ≠ identity) are UX — backend is
+  authoritative.
+- **Settings** (`/app/settings`, ADMIN — `api/settings.ts`): **read-only**
+  reference view; a banner states runtime config comes from environment
+  configuration, not the `app_settings` table. No editable path is exposed.
+
 ## Not implemented (deferred)
-Users/Settings remain placeholders — **Phase 2C.4B** (security-sensitive
-administration: user CRUD, passwords, role changes, activation, settings), not
-started; its last-admin/self-action backend protections must be inspected before
-implementation. **Audit** is contract-blocked (no `GET /audit-logs` in the frozen
-v1 API — a future read-only audit contract is tracked in `docs/backlog/`).
+**Audit** is contract-blocked (no `GET /audit-logs` in the frozen v1 API — a
+future read-only audit contract is tracked in `docs/backlog/`). Editable settings,
+self-action **backend** enforcement, reset-time token/session revocation, and
+login rate-limiting remain deferred production-hardening tasks (see the governance
+review).

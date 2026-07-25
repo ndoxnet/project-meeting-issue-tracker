@@ -17,6 +17,18 @@ export type CurrentUser = S['UserResponse'];
 export type LoginInput = S['LoginRequest'];
 export type TokenResponse = S['TokenResponse'];
 
+// ---- user administration ----
+export type UserResponse = S['UserResponse'];
+export type UserCreate = S['UserCreate'];
+export type UserUpdate = S['UserUpdate'];
+export type PasswordResetRequest = S['PasswordResetRequest'];
+
+// ---- app settings (read-only) ----
+export type AppSettingResponse = S['AppSettingResponse'];
+
+// ---- generic ----
+export type Message = S['Message'];
+
 // ---- errors ----
 export type ApiErrorBody = S['ErrorBody'];
 export type ApiErrorEnvelope = S['ErrorResponse'];
@@ -68,3 +80,4 @@ export const ISSUE_STATUSES: IssueStatus[] = [
   'REOPENED',
 ];
 export const ISSUE_PRIORITIES: IssuePriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+export const USER_ROLES: UserRole[] = ['ADMIN', 'EDITOR', 'VIEWER'];
