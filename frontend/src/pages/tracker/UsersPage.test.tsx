@@ -16,9 +16,10 @@ function renderUsers(role: UserRole = 'ADMIN') {
 }
 
 async function rowOf(name: string): Promise<HTMLElement> {
-  const li = (await screen.findByText(name)).closest('li');
-  if (!li) throw new Error(`row not found for ${name}`);
-  return li as HTMLElement;
+  // Wait for the async list to render the record before locating its row.
+  const row = (await screen.findByText(name)).closest('li');
+  expect(row).not.toBeNull();
+  return row as HTMLElement;
 }
 
 describe('UsersPage', () => {
