@@ -13,7 +13,10 @@ const emptyPage = { items: [], meta: { page: 1, page_size: 20, total: 0, pages: 
 describe('MeetingsListPage', () => {
   it('renders meeting occurrences with the type name', async () => {
     renderWithProviders(<MeetingsListPage />, { initialEntries: ['/app/meetings'] });
-    expect(await screen.findByText('Weekly Progress Meeting')).toBeInTheDocument();
+    // The type name also appears in the filter <option>; target the card link
+    // semantically and assert its destination to keep the query unambiguous.
+    const card = await screen.findByRole('link', { name: /weekly progress meeting/i });
+    expect(card).toHaveAttribute('href', '/app/meetings/occ-1');
   });
 
   it('shows an empty state when there are no meetings', async () => {
@@ -31,7 +34,10 @@ describe('MeetingDetailPage', () => {
       </Routes>,
       { initialEntries: ['/app/meetings/occ-1'] },
     );
-    expect(await screen.findByText('Weekly Progress Meeting')).toBeInTheDocument();
+    // The type name is the page heading here (no filter select on the detail page).
+    expect(
+      await screen.findByRole('heading', { name: /weekly progress meeting/i }),
+    ).toBeInTheDocument();
     // Associated issue from the issues handler.
     expect(await screen.findByText(/Vendor commissioning attendance/i)).toBeInTheDocument();
   });
