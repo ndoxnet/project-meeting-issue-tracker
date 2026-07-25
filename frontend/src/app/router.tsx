@@ -6,9 +6,13 @@ import { AppShell } from '@/components/layout/AppShell';
 import { LoginPage } from '@/pages/LoginPage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
-import { DashboardPlaceholderPage } from '@/pages/DashboardPlaceholderPage';
-import { IssuesPlaceholderPage } from '@/pages/IssuesPlaceholderPage';
-import { MeetingsPlaceholderPage } from '@/pages/MeetingsPlaceholderPage';
+import { TrackerLandingPage } from '@/pages/tracker/TrackerLandingPage';
+import { MeetingsListPage } from '@/pages/tracker/MeetingsListPage';
+import { MeetingDetailPage } from '@/pages/tracker/MeetingDetailPage';
+import { IssuesListPage } from '@/pages/tracker/IssuesListPage';
+import { IssueDetailPage } from '@/pages/tracker/IssueDetailPage';
+import { IssueCreatePage } from '@/pages/tracker/IssueCreatePage';
+import { IssueEditPage } from '@/pages/tracker/IssueEditPage';
 import { ReportsPlaceholderPage } from '@/pages/ReportsPlaceholderPage';
 import { UsersPlaceholderPage } from '@/pages/UsersPlaceholderPage';
 import { AuditPlaceholderPage } from '@/pages/AuditPlaceholderPage';
@@ -26,9 +30,13 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { index: true, element: <Navigate to="/app/dashboard" replace /> },
-          { path: 'dashboard', element: <DashboardPlaceholderPage /> },
-          { path: 'issues', element: <IssuesPlaceholderPage /> },
-          { path: 'meetings', element: <MeetingsPlaceholderPage /> },
+          { path: 'dashboard', element: <TrackerLandingPage /> },
+          { path: 'meetings', element: <MeetingsListPage /> },
+          { path: 'meetings/:meetingId', element: <MeetingDetailPage /> },
+          { path: 'issues', element: <IssuesListPage /> },
+          { path: 'issues/new', element: <IssueCreatePage /> },
+          { path: 'issues/:issueId', element: <IssueDetailPage /> },
+          { path: 'issues/:issueId/edit', element: <IssueEditPage /> },
           { path: 'reports', element: <ReportsPlaceholderPage /> },
           {
             element: <RoleRoute allowedRoles={['ADMIN']} />,
@@ -38,12 +46,10 @@ export const router = createBrowserRouter([
               { path: 'settings', element: <SettingsPlaceholderPage /> },
             ],
           },
-          // Unknown path inside the shell.
           { path: '*', element: <NotFoundPage /> },
         ],
       },
     ],
   },
-  // Global not-found.
   { path: '*', element: <NotFoundPage /> },
 ]);

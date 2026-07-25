@@ -55,10 +55,27 @@ one config (`components/navigation/navigation.ts`).
 - **Session state** → AuthProvider context.
 - No Redux/MobX/Zustand.
 
-## Validation status & Phase 2C.2 handoff
-Placeholders exist for Dashboard, Issues, Meetings, Reports, Users, Audit, Settings.
-The scaffold is **not yet runtime-validated**: install/typecheck/test/build run
-off-VPS via GitHub Actions (`docs/FRONTEND_CI_BOOTSTRAP.md`). **Phase 2C.2 is
-blocked until** the real `package-lock.json` and generated `schema.ts` are committed
-and the permanent CI is green. Then 2C.2 implements the Dashboard and Issue
-register/detail against the typed client and the documented query keys.
+## Core tracker (Phase 2C.2)
+- **API layer:** typed fetchers + React Query hooks per domain — `api/issues.ts`,
+  `api/meetings.ts`, `api/dashboard.ts`, `api/masterdata.ts` — over the shared
+  `api/client.ts`. Types derive from `api/generated/schema.ts` via `api/types.ts`
+  (ADR-019). Stable keys in `api/queryKeys.ts`; mutations invalidate `['issues']`,
+  `['issue', id]`, `['issue', id, 'updates']`, and `['dashboard']`.
+- **Pages** (`pages/tracker/`): TrackerLanding, MeetingsList, MeetingDetail,
+  IssuesList, IssueDetail (+ timeline + `features/issues/IssueActions`),
+  IssueCreate, IssueEdit. Reusable UI: StatusBadge, PriorityBadge, StatCard,
+  Pagination, Field/Select/TextInput/TextArea, Modal, PageHeader, DataState.
+- **Contract mapping:** "Meetings" = meeting **occurrences** (dated, issue-linked);
+  owner ≈ PIC; history = issue-updates timeline. Lifecycle gating mirrors ADR-012
+  in `features/issues/lifecycle.ts` (backend remains authoritative).
+- **Dates:** `lib/dates.ts` — date-only fields shown verbatim (no tz shift);
+  timestamps shown in Asia/Jakarta.
+
+## Validation
+Install/typecheck/lint/test/build run **off-VPS via GitHub Actions**
+(`frontend-validation.yml`) — never on the production VPS (ADR-004). The permanent
+`npm ci` workflow is the acceptance gate for this phase.
+
+## Not implemented (deferred)
+Reports/Users/Audit/Settings remain placeholders; attachments UI, CSV export UI,
+void-update UI, and admin/master-data management are out of Phase 2C.2 scope.

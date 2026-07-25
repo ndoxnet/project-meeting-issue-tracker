@@ -3,6 +3,28 @@
 > Concept by MrHan (08974747477)
 All notable changes to this project are documented here.
 
+## [unreleased] — Phase 2C.2 — Authenticated Meeting Issue Tracker Core UI
+### Added (frontend; validated via GitHub Actions, not on the VPS)
+- **Typed API layer** derived from the generated OpenAPI schema: `api/types.ts`
+  (component aliases), `api/{issues,meetings,dashboard,masterdata}.ts` (fetchers +
+  React Query hooks), `api/queryKeys.ts`. Mutations invalidate issue/dashboard caches.
+- **Pages:** dashboard (real `/dashboard/summary` KPIs + recent issues/meetings),
+  meetings list + detail (occurrences + their issues), issues list (URL-synced
+  server-side filters + pagination), issue detail (fields + follow-up timeline +
+  lifecycle actions), issue create (`POST /issues`), issue edit (diff-based
+  `PATCH`, change-reason gating for PIC/due).
+- **Lifecycle actions** (Editor/Admin, non-archived): change status / close /
+  reopen / add follow-up, gated by an ADR-012 mirror (`features/issues/lifecycle.ts`).
+- **Reusable UI:** StatusBadge, PriorityBadge, StatCard, Pagination, Modal,
+  Field/Select/TextInput/TextArea, PageHeader, DataState; `lib/dates.ts`
+  (date-only vs timestamp handling).
+- **Tests:** Vitest + RTL + MSW for issues list/detail/create/edit, meetings
+  list/detail, dashboard landing, filter→API, and role gating.
+### Notes
+- Contract mapping documented (meetings = occurrences; owner ≈ PIC; history =
+  issue-updates timeline); no non-contract fields invented. Reports/Users/Audit/
+  Settings remain placeholders. No backend/DB change. No npm run on the VPS.
+
 ## [unreleased] — Phase 2C.1.5A — Off-VPS Frontend Validation via GitHub Actions
 ### Added (CI config + docs only — no npm run on the VPS)
 - `.github/workflows/frontend-bootstrap-validation.yml` — manual, read-only,

@@ -1,64 +1,61 @@
 // Concept by MrHan (08974747477)
-// Readable domain type aliases sourced from the frozen v1 OpenAPI contract
-// (docs/api/openapi.json). These are hand-authored per ADR-019 for the types the
-// app uses directly; broader coverage comes from the generated schema
-// (src/api/generated/schema.ts) via openapi-typescript, generated off-VPS.
-//
-// Keep these in sync with the contract; the drift guard is `npm run check:api`.
+// Domain type aliases DERIVED from the generated OpenAPI schema (ADR-019).
+// The generated schema (src/api/generated/schema.ts) is the contract authority;
+// these are readable names for the components used across the app. Do not
+// hand-duplicate backend DTO shapes here.
+import type { components } from './generated/schema';
 
-export type UserRole = 'ADMIN' | 'EDITOR' | 'VIEWER';
+type S = components['schemas'];
 
-export type IssueStatus = 'OPEN' | 'IN_PROGRESS' | 'PENDING' | 'CLOSED' | 'REOPENED';
+// ---- enums ----
+export type UserRole = S['UserRole'];
+export type IssueStatus = S['IssueStatus'];
+export type IssuePriority = S['IssuePriority'];
 
-export type IssuePriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+// ---- auth ----
+export type CurrentUser = S['UserResponse'];
+export type LoginInput = S['LoginRequest'];
+export type TokenResponse = S['TokenResponse'];
 
-/** UserResponse (no password field is ever present). */
-export interface CurrentUser {
-  id: string;
-  full_name: string;
-  email: string;
-  username: string;
-  role: UserRole;
-  is_active: boolean;
-  last_login_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
+// ---- errors ----
+export type ApiErrorBody = S['ErrorBody'];
+export type ApiErrorEnvelope = S['ErrorResponse'];
 
-/** LoginRequest body. `username` accepts a username or an email. */
-export interface LoginInput {
-  username: string;
-  password: string;
-}
-
-/** TokenResponse. The access token is used transiently and never persisted. */
-export interface TokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  user: CurrentUser;
-}
-
-/** Standard error envelope: { error: { code, message, request_id } }. */
-export interface ApiErrorBody {
-  code: string;
-  message: string;
-  request_id?: string | null;
-}
-
-export interface ApiErrorEnvelope {
-  error: ApiErrorBody;
-}
-
-/** PageMeta / Page<T> pagination shape. */
-export interface PageMeta {
-  page: number;
-  page_size: number;
-  total: number;
-  pages: number;
-}
-
+// ---- pagination ----
+export type PageMeta = S['PageMeta'];
 export interface Page<T> {
   items: T[];
   meta: PageMeta;
 }
+
+// ---- master data ----
+export type NamedResponse = S['NamedResponse'];
+export type MeetingOccurrence = S['MeetingOccurrenceResponse'];
+
+// ---- issues ----
+export type IssueListItem = S['IssueListItem'];
+export type IssueDetailResponse = S['IssueDetailResponse'];
+export type IssueCreate = S['IssueCreate'];
+export type IssueMetadataUpdate = S['IssueMetadataUpdate'];
+export type IssueCreateResponse = S['IssueCreateResponse'];
+export type DuplicateWarning = S['DuplicateWarning'];
+export type IssueStatusChangeRequest = S['IssueStatusChangeRequest'];
+export type IssueCloseRequest = S['IssueCloseRequest'];
+export type IssueReopenRequest = S['IssueReopenRequest'];
+export type IssueUpdateCreate = S['IssueUpdateCreate'];
+export type IssueUpdateResponse = S['IssueUpdateResponse'];
+
+// ---- dashboard ----
+export type DashboardSummary = S['DashboardSummary'];
+export type CountByLabel = S['CountByLabel'];
+export type MonthlyTrendPoint = S['MonthlyTrendPoint'];
+
+// ---- constants (from the frozen enums) ----
+export const ISSUE_STATUSES: IssueStatus[] = [
+  'OPEN',
+  'IN_PROGRESS',
+  'PENDING',
+  'CLOSED',
+  'REOPENED',
+];
+export const ISSUE_PRIORITIES: IssuePriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
