@@ -86,6 +86,27 @@ alembic upgrade head                                    # apply
   isolated-container procedure is in `docs/DEPLOYMENT.md`. Do NOT point them at
   production or the AI-XAUUSD database.
 
+## Continuous integration (GitHub Actions)
+All validation runs on GitHub-hosted runners — never on the production VPS.
+
+- **Backend Validation** (`.github/workflows/backend-validation.yml`, RC-Prep 1).
+  Triggers: `pull_request` and `push` to `main` (and `v*` tags) touching
+  `backend/**` or `docs/api/openapi.*`, plus manual `workflow_dispatch`.
+  Least privilege (`contents: read`); no deploy, image build, registry, tagging,
+  or secrets. Split for fast feedback vs. strong RC validation:
+  - **Every push/PR (fast, hermetic, SQLite):** `ruff check` → `ruff format
+    --check` → `mypy` → `pytest` unit/API suite. Chained so it fails fast.
+  - **`main` pushes, `v*` tags, and manual dispatch (heavier):** an ephemeral
+    `postgres:16-alpine` service → `alembic upgrade head` → the Phase 2B.5
+    `tests/integration` suite (`-m postgresql`); the `tests/contract` suite; and
+    an **OpenAPI drift** check that regenerates `docs/api/openapi.{json,yaml}` and
+    fails if the committed contract is stale (mirrors `make openapi-check`). These
+    show `skipped` on pull requests. The Postgres service is a throwaway CI
+    container — never a real database.
+  A final **Summary** job posts a per-check status table to the run summary.
+- **Frontend Validation** (`.github/workflows/frontend-validation.yml`) remains
+  the acceptance gate for `frontend/**` (see `docs/FRONTEND_CI_BOOTSTRAP.md`).
+
 ## Commit rules
 - Conventional-style messages: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`,
   `test:`.

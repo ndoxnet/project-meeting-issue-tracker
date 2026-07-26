@@ -1,0 +1,276 @@
+# Concept by MrHan (08974747477)
+# PERMANENT backend validation (RC-Prep Phase 1).
+#
+# Authoritative CI gate for the backend, on GitHub-hosted runners only. It never
+# touches the production VPS and never deploys, builds images, publishes to a
+# registry, tags releases, or handles deployment secrets — those are later phases.
+#
+# Split strategy (fast developer feedback vs. strong RC validation):
+#   * lint + format + typecheck + unit  -> every push/PR (fast, hermetic, sqlite).
+#   * integration + contract + drift    -> pushes to main, v* tags, and manual
+#                                          dispatch (heavier; spins an ephemeral
+#                                          PostgreSQL service container).
+name: Backend Validation
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "docs/api/openapi.json"
+      - "docs/api/openapi.yaml"
+      - ".github/workflows/backend-validation.yml"
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+    paths:
+      - "backend/**"
+      - "docs/api/openapi.json"
+      - "docs/api/openapi.yaml"
+      - ".github/workflows/backend-validation.yml"
+  workflow_dispatch:
+
+# Least privilege: read-only. No packages/id-token/write scopes.
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # ---- Fast group: runs on every push/PR (fail-fast via the needs chain) ----
+  lint:
+    name: Ruff lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Install backend (dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: ruff check
+        run: ruff check app
+
+  format:
+    name: Ruff format --check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: lint
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Install backend (dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: ruff format --check
+        run: ruff format --check --diff app
+
+  typecheck:
+    name: mypy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: format
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Install backend (dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: mypy
+        run: mypy app
+
+  unit:
+    name: pytest (unit, sqlite)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    needs: typecheck
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Install backend (dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      # Unit/API suite on in-memory SQLite (conftest default). Postgres-only and
+      # contract suites are excluded here; they run in the heavy group below.
+      - name: pytest unit
+        run: pytest --ignore=tests/integration --ignore=tests/contract -m "not integration" -q
+
+  # ---- Heavy group: main pushes, v* tags, and manual dispatch only ----
+  integration:
+    name: PostgreSQL integration (2B.5)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: unit
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || github.ref == 'refs/heads/main'
+      || startsWith(github.ref, 'refs/tags/v')
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: itci
+          POSTGRES_PASSWORD: itci
+          POSTGRES_DB: itci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U itci -d itci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Settings validation at import + Alembic URL source (get_settings().DATABASE_URL).
+      SECRET_KEY: "ci-backend-validation-secret-key-000000000000"
+      APP_ENV: development
+      DATABASE_URL: "postgresql+asyncpg://itci:itci@localhost:5432/itci"
+      # The integration conftest reads POSTGRES_TEST_DATABASE_URL (or INTEGRATION_DATABASE_URL).
+      POSTGRES_TEST_DATABASE_URL: "postgresql+asyncpg://itci:itci@localhost:5432/itci"
+      ADMIN_EMAIL: "admin@example.com"
+      ADMIN_USERNAME: "admin"
+      ADMIN_INITIAL_PASSWORD: "AdminPassw0rd!!"
+      STORAGE_PATH: "/tmp/itci-storage"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Install backend (dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      # Migrate the throwaway CI database to head before the suite runs.
+      - name: Alembic upgrade head
+        run: alembic upgrade head
+      - name: pytest integration (postgresql)
+        run: pytest tests/integration -m postgresql -q
+
+  contract:
+    name: Contract tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: unit
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || github.ref == 'refs/heads/main'
+      || startsWith(github.ref, 'refs/tags/v')
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Install backend (dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      # Contract tests introspect the live app schema vs. the committed artifact;
+      # no database is required.
+      - name: pytest contract
+        run: pytest tests/contract -q
+
+  openapi-drift:
+    name: OpenAPI drift
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: unit
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || github.ref == 'refs/heads/main'
+      || startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Install backend (dev extras + PyYAML)
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install pyyaml
+      # Regenerate the committed contract into the working tree and fail if it
+      # differs from what is committed (mirrors `make openapi-check`).
+      - name: Regenerate OpenAPI
+        working-directory: backend
+        run: python scripts/export_openapi.py
+      - name: Fail if committed OpenAPI is stale
+        run: |
+          if ! git diff --exit-code docs/api/openapi.json docs/api/openapi.yaml; then
+            echo "::error::docs/api/openapi.* is stale — regenerate with 'make openapi-export' and commit."
+            exit 1
+          fi
+
+  # ---- Concise status summary (always runs) ----
+  summary:
+    name: Summary
+    runs-on: ubuntu-24.04
+    if: always()
+    needs: [lint, format, typecheck, unit, integration, contract, openapi-drift]
+    steps:
+      - name: Write job summary
+        run: |
+          {
+            echo "### Backend Validation"
+            echo ""
+            echo "| Check | Status |"
+            echo "|---|---|"
+            echo "| Ruff lint | ${{ needs.lint.result }} |"
+            echo "| Ruff format | ${{ needs.format.result }} |"
+            echo "| mypy | ${{ needs.typecheck.result }} |"
+            echo "| Unit (sqlite) | ${{ needs.unit.result }} |"
+            echo "| Integration (postgres) | ${{ needs.integration.result }} |"
+            echo "| Contract | ${{ needs.contract.result }} |"
+            echo "| OpenAPI drift | ${{ needs.openapi-drift.result }} |"
+            echo ""
+            echo "_Heavy checks (integration/contract/drift) run on main, v* tags, and manual dispatch; they show \`skipped\` on pull requests._"
+          } >> "$GITHUB_STEP_SUMMARY"
