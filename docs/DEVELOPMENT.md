@@ -106,6 +106,17 @@ All validation runs on GitHub-hosted runners — never on the production VPS.
   A final **Summary** job posts a per-check status table to the run summary.
 - **Frontend Validation** (`.github/workflows/frontend-validation.yml`) remains
   the acceptance gate for `frontend/**` (see `docs/FRONTEND_CI_BOOTSTRAP.md`).
+- **Release Images** (`.github/workflows/release-images.yml`, RC-Prep 2).
+  Triggers **only on annotated `v*` tags** (a guard job rejects lightweight tags).
+  Builds the backend and frontend images **off the VPS** on GitHub-hosted runners
+  and publishes them to GHCR — `ghcr.io/ndoxnet/issue-tracker-backend` and
+  `…/issue-tracker-frontend` — authenticating with the built-in `GITHUB_TOKEN`
+  (`packages: write`, least privilege). Image tags: the git tag (e.g.
+  `v1.0.0-rc.1`), `sha-<short>`, and `rc` **for RC tags only**; **no `latest`**.
+  SBOM + provenance are attached via BuildKit; a Trivy scan runs **report-only
+  (non-gating)**. The run summary lists each image's name, tags, and digest. The
+  workflow **never deploys**; the VPS only pulls the published images. A GHCR
+  package the token can write to is required (org/user package-creation enabled).
 
 ## Commit rules
 - Conventional-style messages: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`,

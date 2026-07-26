@@ -1,0 +1,142 @@
+# Concept by MrHan (08974747477)
+# PERMANENT image publishing (RC-Prep Phase 2).
+#
+# Builds the backend and frontend images OFF the VPS (GitHub-hosted runners) and
+# publishes them to GHCR on annotated release tags only. It NEVER deploys, and it
+# does not modify application code, OpenAPI, the database, docker-compose, or any
+# deployment/infrastructure. The production VPS only ever PULLS these images.
+#
+# Frontend build note (ADR-004): the frontend image build runs `npm ci` +
+# `vite build` inside the Docker build here on CI — never on the resource-
+# constrained production VPS.
+name: Release Images
+
+on:
+  push:
+    tags:
+      - "v*"
+
+# Least privilege at the top; the publish job additionally requests packages:write.
+permissions:
+  contents: read
+
+concurrency:
+  # One publish per tag; never cancel an in-flight publish.
+  group: release-images-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Enforce the "annotated release tags only" rule (the trigger alone cannot
+  # distinguish an annotated tag from a lightweight one). Fails fast before build.
+  guard:
+    name: Verify annotated tag
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require an annotated release tag
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          objtype="$(git cat-file -t "refs/tags/${tag}" 2>/dev/null || echo missing)"
+          if [ "$objtype" != "tag" ]; then
+            echo "::error::refs/tags/${tag} is '${objtype}', not an annotated tag. Recreate with: git tag -a ${tag} -m '...'"
+            exit 1
+          fi
+          echo "Verified annotated tag: ${tag}"
+
+  publish:
+    name: Publish ${{ matrix.name }}
+    needs: guard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            image: ghcr.io/ndoxnet/issue-tracker-backend
+            context: ./backend
+          - name: frontend
+            image: ghcr.io/ndoxnet/issue-tracker-frontend
+            context: ./frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      # Compute tags: the git tag, sha-<short>, and `rc` for RC tags only.
+      # No `latest` (flavor latest=false).
+      - name: Docker metadata (tags + labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ matrix.image }}
+          flavor: |
+            latest=false
+          tags: |
+            type=ref,event=tag
+            type=sha,prefix=sha-,format=short
+            type=raw,value=rc,enable=${{ contains(github.ref_name, '-rc.') }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build OFF the VPS and push. SBOM + provenance attestations are attached at
+      # the registry via BuildKit (recommended, and needs no extra GitHub scopes).
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+
+      - name: Publish summary (name / tags / digest)
+        run: |
+          {
+            echo "### ${{ matrix.name }} image published"
+            echo ""
+            echo "- **Name:** \`${{ matrix.image }}\`"
+            echo "- **Digest:** \`${{ steps.build.outputs.digest }}\`"
+            echo "- **Tags:**"
+            echo ""
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Recommended, NON-GATING vulnerability report (continue-on-error).
+      - name: Trivy image scan (report only)
+        id: trivy
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ matrix.image }}@${{ steps.build.outputs.digest }}
+          format: table
+          output: trivy-${{ matrix.name }}.txt
+          exit-code: "0"
+          ignore-unfixed: true
+
+      - name: Trivy report — summary
+        if: always()
+        continue-on-error: true
+        run: |
+          {
+            echo "### ${{ matrix.name }} — Trivy scan (report only, non-gating)"
+            echo ""
+            echo '```'
+            cat "trivy-${{ matrix.name }}.txt" 2>/dev/null || echo "Trivy report unavailable."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
